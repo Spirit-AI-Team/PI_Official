@@ -39,10 +39,12 @@ def create_dataset(config: _config.TrainConfig) -> tuple[_config.DataConfig, _da
 
 def main(config_name: str, max_frames: int | None = None):
     config = _config.get_config(config_name)
+    # import ipdb
+    # ipdb.set_trace()
     data_config, dataset = create_dataset(config)
-
     num_frames = len(dataset)
     shuffle = False
+    print("num_frames", num_frames)
 
     if max_frames is not None and max_frames < num_frames:
         num_frames = max_frames
@@ -51,7 +53,7 @@ def main(config_name: str, max_frames: int | None = None):
     data_loader = _data_loader.TorchDataLoader(
         dataset,
         local_batch_size=1,
-        num_workers=8,
+        num_workers=1,
         shuffle=shuffle,
         num_batches=num_frames,
     )

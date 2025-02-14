@@ -456,6 +456,20 @@ _CONFIGS = [
         num_train_steps=30_000,
     ),
     TrainConfig(
+        name="pi0_libero_simple_test",
+        model=pi0.Pi0Config(),
+        data=LeRobotLiberoDataConfig(
+            repo_id="physical-intelligence/libero",
+            # episodes=[0,1,2,3,4,5,6,7,8],
+            base_config=DataConfig(
+                local_files_only=False,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        num_train_steps=30_000,
+    ),
+    TrainConfig(
         name="pi0_libero_low_mem_finetune",
         model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
         data=LeRobotLiberoDataConfig(
@@ -485,6 +499,23 @@ _CONFIGS = [
         weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_fast_base/params"),
         num_train_steps=30_000,
     ),
+    TrainConfig(
+        name="pi0_fast_libero_low_mem_finetune",
+        model=pi0_fast.Pi0FASTConfig(paligemma_variant="gemma_2b_lora"),
+        data=LeRobotLiberoDataConfig(
+            repo_id="physical-intelligence/libero",
+            base_config=DataConfig(
+                local_files_only=False,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_fast_base/params"),
+        num_train_steps=30_000,
+        freeze_filter=pi0_fast.Pi0FASTConfig(
+            action_dim=7, action_horizon=10, max_token_len=180, paligemma_variant="gemma_2b_lora"
+        ).get_freeze_filter(),
+        ema_decay=None,
+    ),
     #
     # Fine-tuning Aloha configs.
     #
@@ -492,9 +523,9 @@ _CONFIGS = [
     # For instuctions on how to convert and train on your own Aloha dataset see examples/aloha_real/README.md
     TrainConfig(
         name="pi0_aloha_pen_uncap",
-        model=pi0.Pi0Config(),
+        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
         data=LeRobotAlohaDataConfig(
-            repo_id="physical-intelligence/aloha_pen_uncap_diverse",
+            repo_id="aloha_ours_lerobot2",
             assets=AssetsConfig(
                 assets_dir="s3://openpi-assets/checkpoints/pi0_base/assets",
                 asset_id="trossen",
@@ -516,10 +547,16 @@ _CONFIGS = [
                 ]
             ),
             base_config=DataConfig(
-                local_files_only=False,  # Set to True for local-only datasets.
+                local_files_only=True,  # Set to True for local-only datasets.
             ),
         ),
-        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        freeze_filter=pi0.Pi0Config(
+            paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"
+        ).get_freeze_filter(),
+        batch_size=1,
+        wandb_enabled=False,
+        fsdp_devices=1,
+        # weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
         num_train_steps=20_000,
     ),
     # This config is used to demonstrate how to train on a simple simulated environment.

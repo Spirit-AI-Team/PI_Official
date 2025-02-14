@@ -96,6 +96,7 @@ def create_dataset(data_config: _config.DataConfig, model_config: _model.BaseMod
             key: [t / dataset_meta.fps for t in range(model_config.action_horizon)]
             for key in data_config.action_sequence_keys
         },
+        # episodes=[0,1,2,3,4,5,6,7,8],
         local_files_only=data_config.local_files_only,
     )
 
@@ -214,7 +215,12 @@ class TorchDataLoader:
             raise ValueError(f"Local batch size ({local_batch_size}) is larger than the dataset size ({len(dataset)}).")
 
         if sharding is None:
-            sharding = jax.sharding.SingleDeviceSharding(jax.devices()[0])
+            # Use data parallel sharding by default.
+            sharding = jax.sharding.NamedSharding(
+                jax.sharding.Mesh(jax.devices(), ("B",)),
+                jax.sharding.PartitionSpec("B"),
+            )
+
         self._sharding = sharding
         self._num_batches = num_batches
 

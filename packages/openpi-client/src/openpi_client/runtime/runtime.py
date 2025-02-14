@@ -57,7 +57,7 @@ class Runtime:
 
         self._in_episode = True
         self._episode_steps = 0
-        step_time = 1 / self._max_hz if self._max_hz > 0 else 0
+        step_time = 1 / self._max_hz if self._max_hz > 0 else 0 #
         last_step_time = time.time()
 
         while self._in_episode:

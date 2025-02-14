@@ -36,7 +36,7 @@ class AlohaRealEnvironment(_environment.Environment):
         if self._ts is None:
             raise RuntimeError("Timestep is not set. Call reset() first.")
 
-        obs = self._ts.observation
+        obs = self._ts.observation #ts 中打包了ts flag，reward（未实现），observation
         for k in list(obs["images"].keys()):
             if "_depth" in k:
                 del obs["images"][k]

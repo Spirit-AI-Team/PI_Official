@@ -250,6 +250,9 @@ class Pi0(_model.BaseModel):
         time_expanded = time[..., None, None]
         x_t = time_expanded * noise + (1 - time_expanded) * actions
         u_t = noise - actions
+        
+        # jax.debug.print(f'jax print {noise.shape}')
+        # print(f'normal print {noise.shape}')
 
         # one big forward pass of prefix + suffix at once
         prefix_tokens, prefix_mask, prefix_ar_mask = self.embed_prefix(observation)
@@ -262,7 +265,7 @@ class Pi0(_model.BaseModel):
             [prefix_tokens, suffix_tokens], mask=attn_mask, positions=positions
         )
         v_t = self.action_out_proj(suffix_out[:, -self.action_horizon :])
-
+        # jax.debug.breakpoint()
         return jnp.mean(jnp.square(v_t - u_t), axis=-1)
 
     @override
