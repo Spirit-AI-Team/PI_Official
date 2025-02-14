@@ -43,6 +43,7 @@ def main(config_name: str, max_frames: int | None = None):
 
     num_frames = len(dataset)
     shuffle = False
+    print("num_frames", num_frames)
 
     if max_frames is not None and max_frames < num_frames:
         num_frames = max_frames
@@ -51,7 +52,7 @@ def main(config_name: str, max_frames: int | None = None):
     data_loader = _data_loader.TorchDataLoader(
         dataset,
         local_batch_size=1,
-        num_workers=8,
+        num_workers=1,
         shuffle=shuffle,
         num_batches=num_frames,
     )
