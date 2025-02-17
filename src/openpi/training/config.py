@@ -514,8 +514,8 @@ _CONFIGS = [
             repo_id="aloha_ours_lerobot2",
             adapt_to_pi=False,
             assets=AssetsConfig(
-                assets_dir="s3://openpi-assets/checkpoints/pi0_base/assets",
-                asset_id="trossen",
+                assets_dir="/hy-tmp/shuo/openpi/assets/pi0_aloha_pen_uncap",
+                asset_id="aloha_ours_lerobot2",
             ),
             default_prompt="uncap the pen",
             repack_transforms=_transforms.Group(
