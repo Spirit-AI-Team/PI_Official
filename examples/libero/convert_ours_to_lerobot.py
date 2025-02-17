@@ -29,13 +29,13 @@ import torch
 import tqdm
 import numpy as np
 
-REPO_NAME = "aloha_ours_lerobot2"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "lky/Dieyifu_1_3_0214"  # Name of the output dataset, also used for the Hugging Face Hub
 RAW_DATASET_NAMES = [
-    "aloha_ours",
+    "Dieyifu_1_3_0214",
 ]  # For simplicity we will combine multiple Libero datasets into one training dataset
 
 
-def main(data_dir: str, *, push_to_hub: bool = False):
+def main(data_dir: str = '/hy-tmp/likaiyu/resources/ours', *, push_to_hub: bool = False):
     # Clean up any existing dataset in the output directory
     output_path = LEROBOT_HOME / REPO_NAME
     if output_path.exists():
@@ -69,7 +69,7 @@ def main(data_dir: str, *, push_to_hub: bool = False):
                 "shape": (14,),
                 "names": ["state"],
             },
-            "action": {
+            "actions": {
                 "dtype": "float32",
                 "shape": (14,),
                 "names": ["actions"],
@@ -88,8 +88,8 @@ def main(data_dir: str, *, push_to_hub: bool = False):
         hdf5_file_names.sort()
         for hdf5_file_name in tqdm.tqdm(hdf5_file_names, total=len(hdf5_file_names)):
             hdf5_file_path = os.path.join(hdf5s_path, hdf5_file_name)
-            mapping = {"observation.images.cam_high": 'camera0_rgb', "observation.images.cam_left_wrist": 'camera1_rgb', "observation.images.cam_right_wrist": 'camera2_rgb', "observation.state": ['robot0_gripper_width', 'robot1_gripper_width', 'robot_rjoint_rot_axis_angle'], "action": ['robot0_gripper_width', 'robot1_gripper_width', 'robot_rjoint_rot_axis_angle']}
-            value_dict = {"observation.images.cam_high": None, "observation.images.cam_left_wrist": None, "observation.images.cam_right_wrist": None, "observation.state": None, "action": None}
+            mapping = {"observation.images.cam_high": 'camera0_rgb', "observation.images.cam_left_wrist": 'camera1_rgb', "observation.images.cam_right_wrist": 'camera2_rgb', "observation.state": ['robot0_gripper_width', 'robot1_gripper_width', 'robot_rjoint_rot_axis_angle'], "actions": ['robot0_gripper_width', 'robot1_gripper_width', 'robot_rjoint_rot_axis_angle']}
+            value_dict = {"observation.images.cam_high": None, "observation.images.cam_left_wrist": None, "observation.images.cam_right_wrist": None, "observation.state": None, "actions": None}
             with h5py.File(hdf5_file_path, "r") as ep:
 
                 for i, (key, item) in enumerate(value_dict.items()):
@@ -104,7 +104,7 @@ def main(data_dir: str, *, push_to_hub: bool = False):
                         value_dict[key] = v
                     else:
                         value_dict[key] = torch.from_numpy(np.array(ep[mapping[key]]))
-                value_dict['action'] = value_dict['observation.state']
+                value_dict['actions'] = value_dict['observation.state']
 
                 len_traj = value_dict["observation.state"].shape[0]
                 # print(value_dict.keys())
@@ -115,7 +115,7 @@ def main(data_dir: str, *, push_to_hub: bool = False):
                             "observation.images.cam_left_wrist": value_dict['observation.images.cam_left_wrist'][i],
                             "observation.images.cam_right_wrist": value_dict['observation.images.cam_right_wrist'][i],
                             "observation.state": value_dict['observation.state'][i],
-                            "action": value_dict["action"][i],
+                            "actions": value_dict["actions"][i],
                         }
                     )
                 dataset.save_episode(task="fold the shirt.")

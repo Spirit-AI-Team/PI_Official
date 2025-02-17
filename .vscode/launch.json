@@ -24,9 +24,30 @@
             "program": "${workspaceFolder}/scripts/train.py",
             "args": [
                 // "pi0_libero_simple_test",
-                "pi0_libero",
+                "spi0_aloha_dieyifu",
                 "--exp-name=my_experiment", 
-                "--overwrite",
+                // "--overwrite",
+                "--resume",
+            ],
+            "console": "integratedTerminal",
+            "env": {
+                "XLA_PYTHON_CLIENT_MEM_FRACTION":"0.9",
+                "PYTHONPATH": "${workspaceFolder}",
+                "CUDA_VISIBLE_DEVICES":"1",
+            },
+            "envFile": "${workspaceFolder}/.env",
+            "justMyCode": "false",
+            // "pythonPath": "${config:python.pythonPath}"
+        },
+        {
+            "name": "Pi0_LeRobot_Compute_Norm",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/compute_norm_stats.py",
+            "args": [
+                // "pi0_libero_simple_test",
+                "--config_name",
+                "spi0_aloha_dieyifu",
             ],
             "console": "integratedTerminal",
             "env": {

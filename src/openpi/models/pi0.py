@@ -253,7 +253,7 @@ class Pi0(_model.BaseModel):
         
         # jax.debug.print(f'jax print {noise.shape}')
         # print(f'normal print {noise.shape}')
-
+        jax.debug.breakpoint()
         # one big forward pass of prefix + suffix at once
         prefix_tokens, prefix_mask, prefix_ar_mask = self.embed_prefix(observation)
         suffix_tokens, suffix_mask, suffix_ar_mask = self.embed_suffix(observation, x_t, time)

@@ -223,7 +223,7 @@ class LeRobotAlohaDataConfig(DataConfigFactory):
         )
     )
     # Action keys that will be used to read the action sequence from the dataset.
-    action_sequence_keys: Sequence[str] = ("action",)
+    action_sequence_keys: Sequence[str] = ("actions",)
 
     @override
     def create(self, assets_dirs: pathlib.Path, model_config: _model.BaseModelConfig) -> DataConfig:
@@ -456,17 +456,41 @@ _CONFIGS = [
         num_train_steps=30_000,
     ),
     TrainConfig(
-        name="pi0_libero_simple_test",
-        model=pi0.Pi0Config(),
-        data=LeRobotLiberoDataConfig(
-            repo_id="physical-intelligence/libero",
-            # episodes=[0,1,2,3,4,5,6,7,8],
+        name="spi0_aloha_dieyifu",
+        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
+        data=LeRobotAlohaDataConfig(
+            repo_id="lky/Dieyifu_1_3_0214",
+            assets=AssetsConfig(
+                assets_dir="s3://openpi-assets/checkpoints/pi0_base/assets",
+                asset_id="trossen",
+            ),
+            default_prompt="fold the shirt",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                        }
+                    )
+                ]
+            ),
             base_config=DataConfig(
-                local_files_only=False,  # Set to True for local-only datasets.
-                prompt_from_task=True,
+                local_files_only=True,  # Set to True for local-only datasets.
             ),
         ),
-        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        freeze_filter=pi0.Pi0Config(
+            paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"
+        ).get_freeze_filter(),
+        batch_size=32,
+        wandb_enabled=True,
+        fsdp_devices=1,
+        # weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
         num_train_steps=30_000,
     ),
     TrainConfig(
@@ -541,7 +565,7 @@ _CONFIGS = [
                                 "cam_right_wrist": "observation.images.cam_right_wrist",
                             },
                             "state": "observation.state",
-                            "actions": "action",
+                            "actions": "actions",
                         }
                     )
                 ]
