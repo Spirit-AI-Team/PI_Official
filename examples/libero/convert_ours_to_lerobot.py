@@ -104,10 +104,25 @@ def main(data_dir: str, *, push_to_hub: bool = False):
                         value_dict[key] = v
                     else:
                         value_dict[key] = torch.from_numpy(np.array(ep[mapping[key]]))
+
+                ### norm gripper
+                gripper = value_dict['observation.state'][..., :1]
+                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
+                normed_value = gripper - min_value
+                normed_value = normed_value / torch.max(normed_value, dim=0, keepdim=True)[0]
+                value_dict['observation.state'][..., :1] = normed_value * 5.
+                gripper = value_dict['observation.state'][..., 1:2]
+                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
+                normed_value = gripper - min_value
+                normed_value = normed_value / torch.max(normed_value, dim=0, keepdim=True)[0]
+                value_dict['observation.state'][..., 1:2] = normed_value * 5.
+                # print(value_dict['observation.state'][10:20, 1:2])
+                # print("min max, ", torch.max(value_dict['observation.state'][..., 1:2]), torch.min(value_dict['observation.state'][..., 0:1]))
+                # exit()
+                ##################
                 value_dict['action'] = value_dict['observation.state']
 
                 len_traj = value_dict["observation.state"].shape[0]
-                # print(value_dict.keys())
                 for i in range(len_traj):
                     dataset.add_frame(
                         {
