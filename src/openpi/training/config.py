@@ -232,7 +232,7 @@ class LeRobotAlohaDataConfig(DataConfigFactory):
             outputs=[aloha_policy.AlohaOutputs(adapt_to_pi=self.adapt_to_pi)],
         )
         if self.use_delta_joint_actions:
-            delta_action_mask = _transforms.make_bool_mask(6, -1, 6, -1)
+            delta_action_mask = _transforms.make_bool_mask(-1, -1, 6, 6)
             data_transforms = data_transforms.push(
                 inputs=[_transforms.DeltaActions(delta_action_mask)],
                 outputs=[_transforms.AbsoluteActions(delta_action_mask)],
