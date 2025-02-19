@@ -61,7 +61,11 @@ def main(config_name: str, max_frames: int | None = None):
     keys = ["state", "actions"]
     stats = {key: normalize.RunningStats() for key in keys}
 
+    cnt = 1
     for batch in tqdm.tqdm(data_loader, total=num_frames, desc="Computing stats"):
+        # cnt += 1
+        # if cnt == 2000:
+        #     break
         for key in keys:
             values = np.asarray(batch[key][0])
             stats[key].update(values.reshape(-1, values.shape[-1]))

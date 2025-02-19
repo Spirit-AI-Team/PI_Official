@@ -2,6 +2,22 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Pi0_LeRobot_Converter_ours",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/libero/convert_ours_to_lerobot.py",
+            "args": [
+                "--data_dir", "/hy-tmp/likaiyu/resources/ours",
+            ],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "envFile": "${workspaceFolder}/.env",
+            "justMyCode": "false",
+            // "pythonPath": "${config:python.pythonPath}"
+        },
+        {
             "name": "Pi0_LeRobot_Converter",
             "type": "python",
             "request": "launch",
@@ -18,16 +34,17 @@
             // "pythonPath": "${config:python.pythonPath}"
         },
         {
-            "name": "Pi0_LeRobot_Finetune",
+            "name": "Pi0_LeRobot_Finetune_Full",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/scripts/train.py",
             "args": [
                 // "pi0_libero_simple_test",
-                "spi0_aloha_dieyifu",
-                "--exp-name=my_experiment", 
-                // "--overwrite",
-                "--resume",
+                "spi0_aloha_finetune_full",
+                "--exp-name=test_full", 
+                "--no-wandb-enabled",
+                "--overwrite",
+                // "--resume",
             ],
             "console": "integratedTerminal",
             "env": {
@@ -38,6 +55,31 @@
             "envFile": "${workspaceFolder}/.env",
             "justMyCode": "false",
             // "pythonPath": "${config:python.pythonPath}"
+            //CUDA_VISIBLE_DEVICES=0 python ./scripts/train.py spi0_aloha_finetune_full --exp-name=dieyifu1_3_0218 --resume
+        },
+        {
+            "name": "Pi0_LeRobot_Finetune_Lora",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/train.py",
+            "args": [
+                // "pi0_libero_simple_test",
+                "spi0_aloha_finetune_lora",
+                "--exp-name=test_lora", 
+                "--no-wandb-enabled",
+                "--overwrite",
+                // "--resume",
+            ],
+            "console": "integratedTerminal",
+            "env": {
+                "XLA_PYTHON_CLIENT_MEM_FRACTION":"0.9",
+                "PYTHONPATH": "${workspaceFolder}",
+                "CUDA_VISIBLE_DEVICES":"1",
+            },
+            "envFile": "${workspaceFolder}/.env",
+            "justMyCode": "false",
+            // "pythonPath": "${config:python.pythonPath}"
+            //CUDA_VISIBLE_DEVICES=0 python ./scripts/train.py spi0_aloha_finetune_full --exp-name=dieyifu1_3_0218 --resume
         },
         {
             "name": "Pi0_LeRobot_Compute_Norm",
@@ -47,12 +89,13 @@
             "args": [
                 // "pi0_libero_simple_test",
                 "--config_name",
-                "spi0_aloha_dieyifu",
+                "spi0_aloha_finetune_full_noada",
             ],
             "console": "integratedTerminal",
             "env": {
                 "XLA_PYTHON_CLIENT_MEM_FRACTION":"0.9",
-                "PYTHONPATH": "${workspaceFolder}"
+                "PYTHONPATH": "${workspaceFolder}",
+                "CUDA_VISIBLE_DEVICES":"1",
             },
             "envFile": "${workspaceFolder}/.env",
             "justMyCode": "false",

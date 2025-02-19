@@ -456,14 +456,90 @@ _CONFIGS = [
         num_train_steps=30_000,
     ),
     TrainConfig(
-        name="spi0_aloha_dieyifu",
-        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
+        name="spi0_aloha_finetune_full_noada",
+        model=pi0.Pi0Config(),
+        exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="lky/Dieyifu_1_3_0214",
+            repo_id="lky/Dieyifufix_1_3_0218",
             assets=AssetsConfig(
-                assets_dir="s3://openpi-assets/checkpoints/pi0_base/assets",
-                asset_id="trossen",
+                assets_dir="/hy-tmp/likaiyu/PI_Official/assets/spi0_aloha_finetune_full",
+                asset_id="lky/Dieyifufix_1_3_0218",
             ),
+            adapt_to_pi=False,
+            default_prompt="fold the shirt",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+            ),
+        ),
+        batch_size=32,
+        num_workers=4,
+        fsdp_devices=2,
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        num_train_steps=30_000,
+    ),
+    TrainConfig(
+        name="spi0_aloha_finetune_full",
+        model=pi0.Pi0Config(),
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id="lky/Dieyifufix_1_3_0218",
+            assets=AssetsConfig(
+                assets_dir="/hy-tmp/likaiyu/PI_Official/assets/spi0_aloha_finetune_full",
+                asset_id="lky/Dieyifufix_1_3_0218",
+            ),
+            adapt_to_pi=True,
+            default_prompt="fold the shirt",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+            ),
+        ),
+        batch_size=32,
+        num_workers=4,
+        fsdp_devices=2,
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        num_train_steps=30_000,
+    ),
+    TrainConfig(
+        name="spi0_aloha_finetune_lora",
+        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id="lky/Dieyifufix_1_3_0218",
+            assets=AssetsConfig(
+                assets_dir="/hy-tmp/likaiyu/PI_Official/assets/spi0_aloha_finetune_full",
+                asset_id="lky/Dieyifufix_1_3_0218",
+            ),
+            adapt_to_pi=True,
             default_prompt="fold the shirt",
             repack_transforms=_transforms.Group(
                 inputs=[
@@ -488,10 +564,48 @@ _CONFIGS = [
             paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"
         ).get_freeze_filter(),
         batch_size=32,
-        wandb_enabled=True,
+        fsdp_devices=1,
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        num_train_steps=30_000,
+    ),
+    TrainConfig(
+        name="pi0_shuo",
+        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
+        data=LeRobotAlohaDataConfig(
+            repo_id="aloha_ours_lerobot2",
+            adapt_to_pi=False,
+            assets=AssetsConfig(
+                assets_dir="/hy-tmp/shuo/openpi/assets/pi0_aloha_pen_uncap",
+                asset_id="aloha_ours_lerobot2",
+            ),
+            default_prompt="uncap the pen",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+            ),
+        ),
+        freeze_filter=pi0.Pi0Config(
+            paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"
+        ).get_freeze_filter(),
+        batch_size=1,
+        wandb_enabled=False,
         fsdp_devices=1,
         # weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
-        num_train_steps=30_000,
+        num_train_steps=20_000,
     ),
     TrainConfig(
         name="pi0_libero_low_mem_finetune",
@@ -545,44 +659,6 @@ _CONFIGS = [
     #
     # This is a test config that is used to illustate how train on a custom LeRobot dataset.
     # For instuctions on how to convert and train on your own Aloha dataset see examples/aloha_real/README.md
-    TrainConfig(
-        name="pi0_aloha_pen_uncap",
-        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
-        data=LeRobotAlohaDataConfig(
-            repo_id="aloha_ours_lerobot2",
-            assets=AssetsConfig(
-                assets_dir="s3://openpi-assets/checkpoints/pi0_base/assets",
-                asset_id="trossen",
-            ),
-            default_prompt="uncap the pen",
-            repack_transforms=_transforms.Group(
-                inputs=[
-                    _transforms.RepackTransform(
-                        {
-                            "images": {
-                                "cam_high": "observation.images.cam_high",
-                                "cam_left_wrist": "observation.images.cam_left_wrist",
-                                "cam_right_wrist": "observation.images.cam_right_wrist",
-                            },
-                            "state": "observation.state",
-                            "actions": "actions",
-                        }
-                    )
-                ]
-            ),
-            base_config=DataConfig(
-                local_files_only=True,  # Set to True for local-only datasets.
-            ),
-        ),
-        freeze_filter=pi0.Pi0Config(
-            paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"
-        ).get_freeze_filter(),
-        batch_size=1,
-        wandb_enabled=False,
-        fsdp_devices=1,
-        # weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
-        num_train_steps=20_000,
-    ),
     # This config is used to demonstrate how to train on a simple simulated environment.
     TrainConfig(
         name="pi0_aloha_sim",

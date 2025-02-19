@@ -29,11 +29,12 @@ import torch
 import tqdm
 import numpy as np
 
-REPO_NAME = "lky/Dieyifu_1_3_0214"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "lky/Dieyifufix_1_3_0218"  # Name of the output dataset, also used for the Hugging Face Hub
 RAW_DATASET_NAMES = [
     "Dieyifu_1_3_0214",
 ]  # For simplicity we will combine multiple Libero datasets into one training dataset
-
+LEFT_GRIPPER = 6
+RIGHT_GRIPPER = 13
 
 def main(data_dir: str = '/hy-tmp/likaiyu/resources/ours', *, push_to_hub: bool = False):
     # Clean up any existing dataset in the output directory
@@ -81,6 +82,16 @@ def main(data_dir: str = '/hy-tmp/likaiyu/resources/ours', *, push_to_hub: bool 
 
     # Loop over raw Libero datasets and write episodes to the LeRobot dataset
     # You can modify this for your own data format
+    # H5 Action Format:
+    #   tensor Nx22
+    #   1      1       7                7               6      
+    #   l_grip r_grip  l_joints+l_grip  r_joints_r_grip padding 
+    #
+    # Aloha Action Format:
+    #   tensor Nx14
+    #   6        1       6         1
+    #   l_joints l_grip  r_joints  r_grip
+
     for raw_dataset_name in RAW_DATASET_NAMES:
         # raw_dataset = tfds.load(raw_dataset_name, data_dir=data_dir, split="train")
         hdf5s_path = os.path.join(data_dir, raw_dataset_name)
@@ -100,14 +111,26 @@ def main(data_dir: str = '/hy-tmp/likaiyu/resources/ours', *, push_to_hub: bool 
                             # print(each_key, ep[each_key].shape, type(ep[each_key]))
                             v.append(torch.from_numpy(np.array(ep[each_key])))
                         v = torch.cat(v, dim=1)
-                        v = torch.cat([v[..., :8], v[..., 9:15]], dim=1)
+                        v = v[..., 2:16]
                         value_dict[key] = v
                     else:
                         value_dict[key] = torch.from_numpy(np.array(ep[mapping[key]]))
-                value_dict['actions'] = value_dict['observation.state']
+
+                ### norm gripper
+                gripper = value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1]
+                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
+                normed_value = gripper - min_value
+                normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6)
+                value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1] = normed_value * 5.
+                gripper = value_dict['observation.state'][..., RIGHT_GRIPPER:LEFT_GRIPPER+1]
+                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
+                normed_value = gripper - min_value
+                normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6)
+                value_dict['observation.state'][..., RIGHT_GRIPPER:LEFT_GRIPPER+1] = normed_value * 5.
+                ##################
+                value_dict['action'] = value_dict['observation.state']
 
                 len_traj = value_dict["observation.state"].shape[0]
-                # print(value_dict.keys())
                 for i in range(len_traj):
                     dataset.add_frame(
                         {
@@ -118,7 +141,7 @@ def main(data_dir: str = '/hy-tmp/likaiyu/resources/ours', *, push_to_hub: bool 
                             "actions": value_dict["actions"][i],
                         }
                     )
-                dataset.save_episode(task="fold the shirt.")
+                dataset.save_episode(task="fold the shirt")
 
     # Consolidate the dataset, skip computing stats since we will do that later
     dataset.consolidate(run_compute_stats=False)
