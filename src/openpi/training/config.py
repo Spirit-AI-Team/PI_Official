@@ -531,7 +531,7 @@ _CONFIGS = [
     ),
     TrainConfig(
         name="spi0_aloha_finetune_lora",
-        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
+        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora", action_horizon=25),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
             repo_id="lky/Dieyifufix_1_3_0218",
@@ -564,9 +564,10 @@ _CONFIGS = [
             paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"
         ).get_freeze_filter(),
         batch_size=32,
-        fsdp_devices=1,
+        num_workers=4,
+        fsdp_devices=2,
         weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
-        num_train_steps=30_000,
+        num_train_steps=20_000,
     ),
     TrainConfig(
         name="pi0_shuo",

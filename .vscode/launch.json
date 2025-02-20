@@ -50,7 +50,7 @@
             "env": {
                 "XLA_PYTHON_CLIENT_MEM_FRACTION":"0.9",
                 "PYTHONPATH": "${workspaceFolder}",
-                "CUDA_VISIBLE_DEVICES":"1",
+                // "CUDA_VISIBLE_DEVICES":"1",
             },
             "envFile": "${workspaceFolder}/.env",
             "justMyCode": "false",
@@ -74,7 +74,7 @@
             "env": {
                 "XLA_PYTHON_CLIENT_MEM_FRACTION":"0.9",
                 "PYTHONPATH": "${workspaceFolder}",
-                "CUDA_VISIBLE_DEVICES":"1",
+                // "CUDA_VISIBLE_DEVICES":"1",
             },
             "envFile": "${workspaceFolder}/.env",
             "justMyCode": "false",

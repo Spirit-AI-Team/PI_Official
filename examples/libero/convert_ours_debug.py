@@ -29,11 +29,11 @@ import torch
 import tqdm
 import numpy as np
 
-REPO_NAME = "lky/Dieyifufix_1_3_0218"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "debug"  # Name of the output dataset, also used for the Hugging Face Hub
 RAW_DATASET_NAMES = [
     "Dieyifu_1_3_0214",
 ]  # For simplicity we will combine multiple Libero datasets into one training dataset
-LEFT_GRIPPER = 6
+LEFT_GRIPPER = 0
 RIGHT_GRIPPER = 13
 
 def main(data_dir: str = '/hy-tmp/likaiyu/resources/ours', *, push_to_hub: bool = False):
@@ -99,34 +99,45 @@ def main(data_dir: str = '/hy-tmp/likaiyu/resources/ours', *, push_to_hub: bool 
         hdf5_file_names.sort()
         for hdf5_file_name in tqdm.tqdm(hdf5_file_names, total=len(hdf5_file_names)):
             hdf5_file_path = os.path.join(hdf5s_path, hdf5_file_name)
+            if hdf5_file_path != "/hy-tmp/likaiyu/resources/ours/Dieyifu_1_3_0214/episode_146.hdf5":
+                continue
             mapping = {"observation.images.cam_high": 'camera0_rgb', "observation.images.cam_left_wrist": 'camera1_rgb', "observation.images.cam_right_wrist": 'camera2_rgb', "observation.state": ['robot0_gripper_width', 'robot1_gripper_width', 'robot_rjoint_rot_axis_angle'], "actions": ['robot0_gripper_width', 'robot1_gripper_width', 'robot_rjoint_rot_axis_angle']}
             value_dict = {"observation.images.cam_high": None, "observation.images.cam_left_wrist": None, "observation.images.cam_right_wrist": None, "observation.state": None, "actions": None}
             with h5py.File(hdf5_file_path, "r") as ep:
 
                 for i, (key, item) in enumerate(value_dict.items()):
-                    # print(key, item.shape)
                     if type(mapping[key]) == list:
                         v = []
                         for each_key in mapping[key]:
                             # print(each_key, ep[each_key].shape, type(ep[each_key]))
                             v.append(torch.from_numpy(np.array(ep[each_key])))
                         v = torch.cat(v, dim=1)
-                        v = v[..., 2:16]
+                        # v = v[..., 2:16]
+                        v = torch.cat([v[..., :8], v[..., 9:15]], dim=1)
                         value_dict[key] = v
                     else:
                         value_dict[key] = torch.from_numpy(np.array(ep[mapping[key]]))
 
+                for key, value in value_dict.items():
+                    print(key, value.shape)
+
                 ### norm gripper
-                # gripper = value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1]
-                # min_value = torch.min(gripper, dim=0, keepdim=True)[0]
-                # normed_value = gripper - min_value
-                # normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6)
-                # value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1] = normed_value * 5.
-                # gripper = value_dict['observation.state'][..., RIGHT_GRIPPER:LEFT_GRIPPER+1]
-                # min_value = torch.min(gripper, dim=0, keepdim=True)[0]
-                # normed_value = gripper - min_value
-                # normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6)
-                # value_dict['observation.state'][..., RIGHT_GRIPPER:LEFT_GRIPPER+1] = normed_value * 5.
+                gripper = value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1]
+                print(gripper)
+                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
+                print(min_value)
+                normed_value = gripper - min_value
+                tmp = torch.max(normed_value, dim=0, keepdim=True)[0]
+                if tmp[0][0] < 0.01:
+                    print(tmp[0][0], hdf5_file_path)
+                normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0])
+                value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1] = normed_value * 5.
+                gripper = value_dict['observation.state'][..., RIGHT_GRIPPER:LEFT_GRIPPER+1]
+                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
+                normed_value = gripper - min_value
+                normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0])
+                value_dict['observation.state'][..., RIGHT_GRIPPER:LEFT_GRIPPER+1] = normed_value * 5.
+                # print(value_dict['observation.state'][:5])
                 ##################
                 value_dict['action'] = value_dict['observation.state']
 
