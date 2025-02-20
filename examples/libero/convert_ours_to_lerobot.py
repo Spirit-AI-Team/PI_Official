@@ -36,9 +36,6 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 '''
 
 REPO_NAME = "aloha_ours_lerobot3"  # Name of the output dataset, also used for the Hugging Face Hub
-RAW_DATASET_NAMES = [
-    "aloha_ours",
-]  # For simplicity we will combine multiple Libero datasets into one training dataset
 DATASET_TASK = {
     # "aloha_ours" : "fold the shirt.",
     # 'aloha_ours_6steps': 'fold the shirt in 6 step.',
@@ -123,17 +120,6 @@ def main(data_dir: str, *,
                     else:
                         value_dict[key] = torch.from_numpy(np.array(ep[mapping[key]]))
 
-                ### norm gripper
-                gripper = value_dict['observation.state'][..., :1]
-                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
-                normed_value = gripper - min_value
-                normed_value = normed_value / torch.max(normed_value, dim=0, keepdim=True)[0]
-                value_dict['observation.state'][..., :1] = normed_value * 5.
-                gripper = value_dict['observation.state'][..., 1:2]
-                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
-                normed_value = gripper - min_value
-                normed_value = normed_value / torch.max(normed_value, dim=0, keepdim=True)[0]
-                value_dict['observation.state'][..., 1:2] = normed_value * 5.
                 # print(value_dict['observation.state'][10:20, 1:2])
                 # print("min max, ", torch.max(value_dict['observation.state'][..., 1:2]), torch.min(value_dict['observation.state'][..., 0:1]))
                 # exit()
