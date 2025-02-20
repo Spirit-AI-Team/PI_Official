@@ -29,59 +29,77 @@ import torch
 import tqdm
 import numpy as np
 
-REPO_NAME = "aloha_ours_lerobot2"  # Name of the output dataset, also used for the Hugging Face Hub
+'''
+uv run examples/libero/convert_ours_to_lerobot.py --data-dir /hy-tmp/lmz/pi0_data/example --create-from-scratch
+param:
+create-from-scratch: create lerobot dataset from scratch. this will Clean up any existing dataset in the output directory
+'''
+
+REPO_NAME = "aloha_ours_lerobot3"  # Name of the output dataset, also used for the Hugging Face Hub
 RAW_DATASET_NAMES = [
     "aloha_ours",
 ]  # For simplicity we will combine multiple Libero datasets into one training dataset
+DATASET_TASK = {
+    # "aloha_ours" : "fold the shirt.",
+    # 'aloha_ours_6steps': 'fold the shirt in 6 step.',
+    '20250117_Y_AL06_dieyifu_01_pretra_6steps_WXY_ai': 'fold the shirt in 6 step.',
+}
 
-
-def main(data_dir: str, *, push_to_hub: bool = False):
+def main(data_dir: str, *, 
+         push_to_hub: bool = False, 
+         create_from_scratch: bool = False,
+         ):
     # Clean up any existing dataset in the output directory
-    output_path = LEROBOT_HOME / REPO_NAME
-    if output_path.exists():
-        shutil.rmtree(output_path)
+    if create_from_scratch:
+        output_path = LEROBOT_HOME / REPO_NAME
+        print (f'remove old path: {output_path}')
+        if output_path.exists():
+            shutil.rmtree(output_path)
 
     # Create LeRobot dataset, define features to store
     # OpenPi assumes that proprio is stored in `state` and actions in `action`
     # LeRobot assumes that dtype of image data is `image`
-    dataset = LeRobotDataset.create(
-        repo_id=REPO_NAME,
-        robot_type="aloha",
-        fps=10,
-        features={
-            "observation.images.cam_high": {
-                "dtype": "image",
-                "shape": (224, 224, 3),
-                "names": ["height", "width", "channel"],
+    if create_from_scratch:
+        dataset = LeRobotDataset.create(
+            repo_id=REPO_NAME,
+            robot_type="aloha",
+            fps=10,
+            features={
+                "observation.images.cam_high": {
+                    "dtype": "image",
+                    "shape": (224, 224, 3),
+                    "names": ["height", "width", "channel"],
+                },
+                "observation.images.cam_left_wrist": {
+                    "dtype": "image",
+                    "shape": (224, 224, 3),
+                    "names": ["height", "width", "channel"],
+                },
+                "observation.images.cam_right_wrist": {
+                    "dtype": "image",
+                    "shape": (224, 224, 3),
+                    "names": ["height", "width", "channel"],
+                },
+                "observation.state": {
+                    "dtype": "float32",
+                    "shape": (14,),
+                    "names": ["state"],
+                },
+                "action": {
+                    "dtype": "float32",
+                    "shape": (14,),
+                    "names": ["actions"],
+                },
             },
-            "observation.images.cam_left_wrist": {
-                "dtype": "image",
-                "shape": (224, 224, 3),
-                "names": ["height", "width", "channel"],
-            },
-            "observation.images.cam_right_wrist": {
-                "dtype": "image",
-                "shape": (224, 224, 3),
-                "names": ["height", "width", "channel"],
-            },
-            "observation.state": {
-                "dtype": "float32",
-                "shape": (14,),
-                "names": ["state"],
-            },
-            "action": {
-                "dtype": "float32",
-                "shape": (14,),
-                "names": ["actions"],
-            },
-        },
-        image_writer_threads=10,
-        image_writer_processes=5,
-    )
+            image_writer_threads=10,
+            image_writer_processes=5,
+        )
+    else:
+        dataset = LeRobotDataset(repo_id=REPO_NAME, local_files_only=True)
 
     # Loop over raw Libero datasets and write episodes to the LeRobot dataset
     # You can modify this for your own data format
-    for raw_dataset_name in RAW_DATASET_NAMES:
+    for raw_dataset_name, task_instruction in DATASET_TASK.items():
         # raw_dataset = tfds.load(raw_dataset_name, data_dir=data_dir, split="train")
         hdf5s_path = os.path.join(data_dir, raw_dataset_name)
         hdf5_file_names = os.listdir(hdf5s_path)
@@ -133,7 +151,7 @@ def main(data_dir: str, *, push_to_hub: bool = False):
                             "action": value_dict["action"][i],
                         }
                     )
-                dataset.save_episode(task="fold the shirt.")
+                dataset.save_episode(task=task_instruction)
 
     # Consolidate the dataset, skip computing stats since we will do that later
     dataset.consolidate(run_compute_stats=False)
