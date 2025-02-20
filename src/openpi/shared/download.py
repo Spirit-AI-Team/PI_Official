@@ -28,10 +28,10 @@ logger = logging.getLogger(__name__)
 
 def get_cache_dir() -> pathlib.Path:
     default_dir = "~/.cache/openpi"
-    if os.path.exists("/hy-tmp/likaiyu/resources"):
-        default_dir = "/hy-tmp/likaiyu/resources"
+    if os.path.exists("/pfstem/likaiyu/resources"):
+        default_dir = "/pfstem/likaiyu/resources"
         print("OH YEAH")
-    default_dir = "/hy-tmp/likaiyu/resources"
+    default_dir = "/pfstem/likaiyu/resources"
     if os.path.exists("/mnt/weka"):  # noqa: PTH110
         default_dir = f"/mnt/weka/{getpass.getuser()}/.cache/openpi"
 
