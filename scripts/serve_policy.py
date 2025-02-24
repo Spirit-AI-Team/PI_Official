@@ -15,11 +15,15 @@ class EnvMode(enum.Enum):
     """Supported environments."""
 
     ALOHA = "aloha"
+    ALOHA_TOWEL="aloha"
     ALOHA_SIM = "aloha_sim"
     DROID = "droid"
     LIBERO = "libero"
-
-
+    SPI0_ARX = "spi0_arx"
+    SPI0_ARX_LoRA = 'spi0_arx_lora'
+    SPI0_ARX_LoRA2 = 'spi0_arx_lora2'
+    SPI0_ARX_LoRA_Multi = 'spi0_arx_lora_multi'
+    SPI0_ARX_FULL = 'spi0_arx_multi'
 @dataclasses.dataclass
 class Checkpoint:
     """Load a policy from a trained checkpoint."""
@@ -61,6 +65,30 @@ DEFAULT_CHECKPOINT: dict[EnvMode, Checkpoint] = {
         config="pi0_aloha",
         dir="s3://openpi-assets/checkpoints/pi0_base",
     ),
+    EnvMode.ALOHA_TOWEL: Checkpoint(
+        config="pi0_aloha_towel",
+        dir="s3://openpi-assets/checkpoints/pi0_aloha_towel",
+    ),
+    EnvMode.SPI0_ARX: Checkpoint(
+        config="spi0_aloha_finetune_full",
+        dir="checkpoints/dieyifu1_3_0218_debug/29999",
+    ),
+    EnvMode.SPI0_ARX_FULL: Checkpoint(
+        config="spi0_aloha_finetune_full",
+        dir="checkpoints/pi0mvp_multi_0220_full/20000",
+    ),
+    EnvMode.SPI0_ARX_LoRA: Checkpoint(
+        config="spi0_aloha_finetune_lora",
+        dir="checkpoints/dieyifu1_3_0219_lora/19999",
+    ),
+    EnvMode.SPI0_ARX_LoRA2: Checkpoint(
+        config="spi0_aloha_finetune_lora",
+        dir="checkpoints/dieyifu1_3_0219_lora_ah25/19999",
+    ),
+    EnvMode.SPI0_ARX_LoRA_Multi: Checkpoint(
+        config="spi0_aloha_finetune_lora",
+        dir="checkpoints/pi0mvp_multi_0220_lora/19999",
+    ),#Put the brown cup into the blue plate
     EnvMode.ALOHA_SIM: Checkpoint(
         config="pi0_aloha_sim",
         dir="s3://openpi-assets/checkpoints/pi0_aloha_sim",

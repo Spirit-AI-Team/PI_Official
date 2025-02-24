@@ -1,0 +1,11 @@
+ssh -p 56658 root@i-2.gpushare.com
+MmnNWcSVHp8ZUUFd6MYyyvhyFrVWEXMQ
+scp -r -P 56658 root@i-2.gpushare.com:/hy-tmp/likaiyu/PI_Official/checkpoints/spi0_aloha_dieyifu/my_experiment/20000 ./checkpoints
+
+oss login
+#15600155670
+#spirit-ai
+sudo oss ls -s -d oss://likaiyu/weights
+sudo oss cp oss://likaiyu/weights/dieyifu1_3_0218_debug_3w.zip checkpoints/dieyifu1_3_0218_debug/
+
+unzip -d xx xx.zip

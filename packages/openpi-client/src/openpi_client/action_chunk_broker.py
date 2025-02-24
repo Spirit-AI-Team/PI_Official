@@ -5,7 +5,8 @@ import tree
 from typing_extensions import override
 
 from openpi_client import base_policy as _base_policy
-
+import pdb
+import time
 
 class ActionChunkBroker(_base_policy.BasePolicy):
     """Wraps a policy to return action chunks one-at-a-time.
@@ -23,11 +24,19 @@ class ActionChunkBroker(_base_policy.BasePolicy):
         self._cur_step: int = 0
 
         self._last_results: Dict[str, np.ndarray] | None = None
+        self.time_counter = 0
+        self.time_step = 0
 
     @override
     def infer(self, obs: Dict) -> Dict:  # noqa: UP006
         if self._last_results is None:
+            # pdb.set_trace()
+            tic = time.time()
             self._last_results = self._policy.infer(obs)
+            toc = time.time()
+            self.time_counter += toc - tic
+            self.time_step += 1
+            # pdb.set_trace()
             self._cur_step = 0
 
         results = tree.map_structure(lambda x: x[self._cur_step, ...], self._last_results)
