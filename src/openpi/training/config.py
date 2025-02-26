@@ -31,7 +31,7 @@ ModelType: TypeAlias = _model.ModelType
 Filter: TypeAlias = nnx.filterlib.Filter
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class AssetsConfig:
     """Determines the location of assets (e.g., norm stats) that will be used to set up the data pipeline.
 
@@ -55,10 +55,10 @@ class AssetsConfig:
 
     # Asset id. If not provided, the repo id will be used. This allows users to reference assets that describe
     # different robot platforms.
-    asset_id: str | None = None
+    asset_id: list | None | str = None
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class DataConfig:
     # LeRobot repo id. If None, fake data will be created.
     repo_id: str | None = None
@@ -96,7 +96,7 @@ class GroupFactory(Protocol):
         """Create a group."""
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class ModelTransformFactory(GroupFactory):
     """Creates model transforms for standard pi0 models."""
 
@@ -134,10 +134,10 @@ class ModelTransformFactory(GroupFactory):
                 )
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class DataConfigFactory(abc.ABC):
     # The LeRobot repo id.
-    repo_id: str = tyro.MISSING
+    repo_id: list | None | str = None
     # Determines how the assets will be loaded.
     assets: AssetsConfig = dataclasses.field(default_factory=AssetsConfig)
     # Base config that will be updated by the factory.
@@ -170,7 +170,7 @@ class DataConfigFactory(abc.ABC):
         return None
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class FakeDataConfig(DataConfigFactory):
     repo_id: str = "fake"
 
@@ -179,7 +179,7 @@ class FakeDataConfig(DataConfigFactory):
         return DataConfig(repo_id=self.repo_id)
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class SimpleDataConfig(DataConfigFactory):
     # Factory for the data transforms.
     data_transforms: tyro.conf.Suppress[GroupFactory] = dataclasses.field(default_factory=GroupFactory)
@@ -196,7 +196,7 @@ class SimpleDataConfig(DataConfigFactory):
         )
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class LeRobotAlohaDataConfig(DataConfigFactory):
     # If true, will convert joint dimensions to deltas with respect to the current state before passing to the model.
     # Gripper dimensions will remain in absolute values.
@@ -249,7 +249,7 @@ class LeRobotAlohaDataConfig(DataConfigFactory):
         )
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class LeRobotLiberoDataConfig(DataConfigFactory):
     @override
     def create(self, assets_dirs: pathlib.Path, model_config: _model.BaseModelConfig) -> DataConfig:
@@ -292,7 +292,7 @@ class LeRobotLiberoDataConfig(DataConfigFactory):
         )
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class TrainConfig:
     # Name of the config. Must be unique. Will be used to reference this config.
     name: tyro.conf.Suppress[str]
@@ -357,6 +357,8 @@ class TrainConfig:
     # eg. if total device is 4 and fsdp devices is 2; then the model will shard to 2 devices and run
     # data parallel between 2 groups of devices.
     fsdp_devices: int = 1
+
+    sample_weights_cfg: str = "./examples/libero/datasets_weights.json"
 
     @property
     def assets_dirs(self) -> pathlib.Path:
@@ -511,11 +513,11 @@ _CONFIGS = [
         name="pi0_aloha_pen_uncap",
         model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
         data=LeRobotAlohaDataConfig(
-            repo_id="aloha_ours_lerobot2",
+            repo_id="aloha_ours_lerobot_0",
             adapt_to_pi=False,
             assets=AssetsConfig(
-                assets_dir="/hy-tmp/shuo/openpi/assets/pi0_aloha_pen_uncap",
-                asset_id="aloha_ours_lerobot2",
+                assets_dir="/hy-tmp/lmz/PI_Official/assets/pi0_aloha_pen_uncap",
+                asset_id="aloha_ours_lerobot_0",
             ),
             default_prompt="uncap the pen",
             repack_transforms=_transforms.Group(
@@ -541,6 +543,46 @@ _CONFIGS = [
             paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"
         ).get_freeze_filter(),
         batch_size=1,
+        wandb_enabled=False,
+        fsdp_devices=1,
+        # weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        num_train_steps=10,
+    ),
+    TrainConfig(
+        name="test_multi_dataset",
+        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
+        data=LeRobotAlohaDataConfig(
+            repo_id=["lerobot_0", "lerobot_1", "lerobot_2"],
+            adapt_to_pi=False,
+            assets=AssetsConfig(
+                assets_dir="/hy-tmp/lmz/PI_Official/assets/pi0_aloha_pen_uncap",
+                asset_id=["aloha_ours_lerobot_0", "aloha_ours_lerobot_0", "aloha_ours_lerobot_0"],
+            ),
+            default_prompt="uncap the pen",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "action",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        freeze_filter=pi0.Pi0Config(
+            paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"
+        ).get_freeze_filter(),
+        batch_size=8,
         wandb_enabled=False,
         fsdp_devices=1,
         # weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
