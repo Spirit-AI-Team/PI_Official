@@ -104,7 +104,16 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
 
     # Loop over raw Libero datasets and write episodes to the LeRobot dataset
     # You can modify this for your own data format
-    # def func(pair):
+    # H5 Action Format:
+    #   tensor Nx22
+    #   1      1       7                7               6      
+    #   l_grip r_grip  l_joints+l_grip  r_joints_r_grip padding 
+    #
+    # Aloha Action Format:
+    #   tensor Nx14
+    #   6        1       6         1
+    #   l_joints l_grip  r_joints  r_grip
+    
     for raw_dataset_name, task_instruction in DATASET_TASK.items():
         # raw_dataset_name, task_instruction = pair    
         hdf5s_path = os.path.join(data_dir, raw_dataset_name)
