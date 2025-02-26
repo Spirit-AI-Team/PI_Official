@@ -43,7 +43,7 @@ def main(config_name: str, max_frames: int | None = None):
     # ipdb.set_trace()
     data_config, dataset = create_dataset(config)
     num_frames = len(dataset)
-    shuffle = False
+    shuffle = True
     print("num_frames", num_frames)
 
     if max_frames is not None and max_frames < num_frames:

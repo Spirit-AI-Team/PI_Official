@@ -20,6 +20,7 @@ Running this conversion script will take approximately 30 minutes.
 
 import shutil
 import os
+import sys
 from lerobot.common.datasets.lerobot_dataset import LEROBOT_HOME
 from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
 # import tensorflow_datasets as tfds
@@ -28,24 +29,30 @@ import h5py
 import torch
 import tqdm
 import numpy as np
+import time
 
 '''
 uv run examples/libero/convert_ours_to_lerobot.py --data-dir /hy-tmp/lmz/pi0_data/example --create-from-scratch
 param:
 create-from-scratch: create lerobot dataset from scratch. this will Clean up any existing dataset in the output directory
 '''
+POOL_SIZE = 9
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
-REPO_NAME = "aloha_ours_lerobot3"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "FlattenShirtNew"  # Name of the output dataset, also used for the Hugging Face Hub
 DATASET_TASK = {
-    # "aloha_ours" : "fold the shirt.",
-    # 'aloha_ours_6steps': 'fold the shirt in 6 step.',
-    '20250117_Y_AL06_dieyifu_01_pretra_6steps_WXY_ai': 'fold the shirt in 6 step.',
+# '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL02_DYF03_PI0STEP01FINE_CXJ_ai_hdf5':'Flatten the shirt',
+'/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL03_DYF03_PI0STEPS01_WHJ_ai_hdf5':'Flatten the shirt',
+'/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL04_DYF03_PI0STEP01_GY_ai_hdf5':'Flatten the shirt',
+'/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL05_DYF03_PI0STEPS01_WYJ_ai_hdf5':'Flatten the shirt',
+'/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL07_DYF03_PI0STEP01_TCZ_ai_hdf5':'Flatten the shirt',
+'/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL08_DYF03_PI0STEPS01_LTJ_ai_hdf5':'Flatten the shirt',
+# '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL09_DYF03_PIOSTEP01FINE_SZH_ai_hdf5':'Flatten the shirt',
 }
 
-def main(data_dir: str, *, 
+def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *, 
          push_to_hub: bool = False, 
-         create_from_scratch: bool = False,
+         create_from_scratch: bool = True,
          ):
     # Clean up any existing dataset in the output directory
     if create_from_scratch:
@@ -83,7 +90,7 @@ def main(data_dir: str, *,
                     "shape": (14,),
                     "names": ["state"],
                 },
-                "action": {
+                "actions": {
                     "dtype": "float32",
                     "shape": (14,),
                     "names": ["actions"],
@@ -97,8 +104,9 @@ def main(data_dir: str, *,
 
     # Loop over raw Libero datasets and write episodes to the LeRobot dataset
     # You can modify this for your own data format
+    # def func(pair):
     for raw_dataset_name, task_instruction in DATASET_TASK.items():
-        # raw_dataset = tfds.load(raw_dataset_name, data_dir=data_dir, split="train")
+        # raw_dataset_name, task_instruction = pair    
         hdf5s_path = os.path.join(data_dir, raw_dataset_name)
         hdf5_file_names = os.listdir(hdf5s_path)
         hdf5_file_names.sort()
@@ -148,8 +156,11 @@ def main(data_dir: str, *,
                     )
                 dataset.save_episode(task=task_instruction)
 
+    # pool = ThreadPool(POOL_SIZE)
+    # pool.map(func, [(k,v) for k,v in DATASET_TASK.items()]) 
+        # raw_dataset = tfds.load(raw_dataset_name, data_dir=data_dir, split="train")
     # Consolidate the dataset, skip computing stats since we will do that later
-    dataset.consolidate(run_compute_stats=False)
+    dataset.consolidate(run_compute_stats=False, keep_image_files = True)
 
     # Optionally push to the Hugging Face Hub
     if push_to_hub:
@@ -162,4 +173,9 @@ def main(data_dir: str, *,
 
 
 if __name__ == "__main__":
+    tic = time.time()
     tyro.cli(main)
+    toc = time.time()
+    print(f'Convert lerobot in {(toc-tic)//60} mins {(toc-tic)%60} secs')
+
+

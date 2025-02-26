@@ -18,13 +18,13 @@
             // "pythonPath": "${config:python.pythonPath}"
         },
         {
-            "name": "Pi0_LeRobot_Converter",
+            "name": "Pi0_LeRobot_Test",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/examples/libero/convert_libero_data_to_lerobot.py",
-            "args": [
-                "--data_dir", "/hy-tmp/likaiyu/resources/modified_libero_rlds",
-            ],
+            "program": "${workspaceFolder}/examples/check_lerobot.py",
+            // "args": [
+            //     "--data_dir", "/hy-tmp/likaiyu/resources/modified_libero_rlds",
+            // ],
             "console": "integratedTerminal",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
@@ -89,13 +89,14 @@
             "args": [
                 // "pi0_libero_simple_test",
                 "--config_name",
-                "spi0_aloha_finetune_full_noada",
+                "spi0_aloha_s2pretrain_full",
+                "--max_frames", "10000"
             ],
             "console": "integratedTerminal",
             "env": {
                 "XLA_PYTHON_CLIENT_MEM_FRACTION":"0.9",
                 "PYTHONPATH": "${workspaceFolder}",
-                "CUDA_VISIBLE_DEVICES":"1",
+                "CUDA_VISIBLE_DEVICES":"0",
             },
             "envFile": "${workspaceFolder}/.env",
             "justMyCode": "false",
