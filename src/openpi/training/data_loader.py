@@ -12,7 +12,7 @@ import json
 import torch
 from torch.utils.data.dataset import ConcatDataset
 from torch.utils.data.sampler import WeightedRandomSampler
-from openpi.training.multi_task_batch_scheduler import MultiDataset
+# from openpi.training.multi_task_batch_scheduler import MultiDataset
 import copy
 import tyro
 import openpi.training.sharding as sharding

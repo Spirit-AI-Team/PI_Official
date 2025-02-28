@@ -216,7 +216,7 @@ def main(config: _config.TrainConfig):
     )
     init_wandb(config, resuming=resuming, enabled=config.wandb_enabled)
 
-    data_loader = _data_loader.create_data_loader(
+    data_loader = _data_loader.create_multi_data_loader(
         config,
         sharding=data_sharding,
         num_workers=config.num_workers,
@@ -224,6 +224,7 @@ def main(config: _config.TrainConfig):
     )
     data_iter = iter(data_loader)
     batch = next(data_iter)
+    # import pdb; pdb.set_trace()
     logging.info(f"Initialized data loader:\n{training_utils.array_tree_to_info(batch)}")
 
     train_state, train_state_sharding = init_train_state(config, init_rng, mesh, resume=resuming)

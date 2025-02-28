@@ -223,7 +223,7 @@ class LeRobotAlohaDataConfig(DataConfigFactory):
         )
     )
     # Action keys that will be used to read the action sequence from the dataset.
-    action_sequence_keys: Sequence[str] = ("action",)
+    action_sequence_keys: Sequence[str] = ("actions",)
 
     @override
     def create(self, assets_dirs: pathlib.Path, model_config: _model.BaseModelConfig) -> DataConfig:
@@ -510,14 +510,14 @@ _CONFIGS = [
     # This is a test config that is used to illustate how train on a custom LeRobot dataset.
     # For instuctions on how to convert and train on your own Aloha dataset see examples/aloha_real/README.md
     TrainConfig(
-        name="pi0_aloha_pen_uncap",
+        name="compute_norm",
         model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
         data=LeRobotAlohaDataConfig(
-            repo_id="aloha_ours_lerobot_0",
+            repo_id="exp_zarrzip_input",
             adapt_to_pi=False,
             assets=AssetsConfig(
-                assets_dir="/hy-tmp/lmz/PI_Official/assets/pi0_aloha_pen_uncap",
-                asset_id="aloha_ours_lerobot_0",
+                assets_dir="/pfstem/zhangshuo/tmp/assets",
+                asset_id="exp_zarrzip_input",
             ),
             default_prompt="uncap the pen",
             repack_transforms=_transforms.Group(
@@ -530,7 +530,7 @@ _CONFIGS = [
                                 "cam_right_wrist": "observation.images.cam_right_wrist",
                             },
                             "state": "observation.state",
-                            "actions": "action",
+                            "actions": "actions",
                         }
                     )
                 ]
@@ -551,14 +551,16 @@ _CONFIGS = [
     TrainConfig(
         name="test_multi_dataset",
         model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
+        sample_weights_cfg="/pfstem/zhangshuo/tmp2/data_sample.json",
+        checkpoint_base_dir="/pfstem/zhangshuo/checkpoints",
         data=LeRobotAlohaDataConfig(
-            repo_id=["lerobot_0", "lerobot_1", "lerobot_2"],
+            repo_id=["exp_zarrzip_input", "exp_zarrzip_input2", "exp_zarrzip_input3"],
             adapt_to_pi=False,
             assets=AssetsConfig(
-                assets_dir="/hy-tmp/lmz/PI_Official/assets/pi0_aloha_pen_uncap",
-                asset_id=["aloha_ours_lerobot_0", "aloha_ours_lerobot_0", "aloha_ours_lerobot_0"],
+                assets_dir="/root/shuo/pi_debug/assets/test_multi_dataset",
+                asset_id=["exp_zarrzip_input", "exp_zarrzip_input2", "exp_zarrzip_input3"],
             ),
-            default_prompt="uncap the pen",
+            # default_prompt="uncap the pen",
             repack_transforms=_transforms.Group(
                 inputs=[
                     _transforms.RepackTransform(
@@ -569,7 +571,8 @@ _CONFIGS = [
                                 "cam_right_wrist": "observation.images.cam_right_wrist",
                             },
                             "state": "observation.state",
-                            "actions": "action",
+                            "actions": "actions",
+                            "prompt": "prompt"
                         }
                     )
                 ]
@@ -582,7 +585,7 @@ _CONFIGS = [
         freeze_filter=pi0.Pi0Config(
             paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"
         ).get_freeze_filter(),
-        batch_size=8,
+        batch_size=32,
         wandb_enabled=False,
         fsdp_devices=1,
         # weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
@@ -642,5 +645,4 @@ def get_config(config_name: str) -> TrainConfig:
         closest = difflib.get_close_matches(config_name, _CONFIGS_DICT.keys(), n=1, cutoff=0.0)
         closest_str = f" Did you mean '{closest[0]}'? " if closest else ""
         raise ValueError(f"Config '{config_name}' not found.{closest_str}")
-
     return _CONFIGS_DICT[config_name]
