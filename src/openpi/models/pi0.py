@@ -266,7 +266,8 @@ class Pi0(_model.BaseModel):
         )
         v_t = self.action_out_proj(suffix_out[:, -self.action_horizon :])
         # jax.debug.breakpoint()
-        return jnp.mean(jnp.square(v_t - u_t), axis=-1)
+        # return jnp.mean(jnp.square(v_t - u_t), axis=-1)
+        return jnp.square(v_t - u_t)
 
     @override
     def sample_actions(
