@@ -36,18 +36,25 @@ uv run examples/libero/convert_ours_to_lerobot.py --data-dir /hy-tmp/lmz/pi0_dat
 param:
 create-from-scratch: create lerobot dataset from scratch. this will Clean up any existing dataset in the output directory
 '''
-POOL_SIZE = 9
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
-REPO_NAME = "FlattenShirtNew"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "FlattenShirt25_01"  # Name of the output dataset, also used for the Hugging Face Hub
+#XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
+
+dataset_paths = [
+                '/pfstem/likaiyu/resources/hdf5/0_1new',
+                '/pfstem/likaiyu/resources/hdf5/0_1new_0226',
+                '/pfstem/likaiyu/resources/hdf5/0_1new_0227',
+                '/pfstem/likaiyu/resources/hdf5/0_1new_0228',
+                '/pfstem/likaiyu/resources/hdf5/0_1new_0301',
+                ]
+dataset_files = []
+for dataset_path in dataset_paths:
+    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'tar.gz' not in p]
+
 DATASET_TASK = {
 # '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL02_DYF03_PI0STEP01FINE_CXJ_ai_hdf5':'Flatten the shirt',
-'/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL03_DYF03_PI0STEPS01_WHJ_ai_hdf5':'Flatten the shirt',
-'/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL04_DYF03_PI0STEP01_GY_ai_hdf5':'Flatten the shirt',
-'/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL05_DYF03_PI0STEPS01_WYJ_ai_hdf5':'Flatten the shirt',
-'/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL07_DYF03_PI0STEP01_TCZ_ai_hdf5':'Flatten the shirt',
-'/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL08_DYF03_PI0STEPS01_LTJ_ai_hdf5':'Flatten the shirt',
-# '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL09_DYF03_PIOSTEP01FINE_SZH_ai_hdf5':'Flatten the shirt',
+    p:'Flatten the shirt' for p in dataset_files
 }
 
 def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *, 
@@ -96,8 +103,8 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
                     "names": ["actions"],
                 },
             },
-            image_writer_threads=10,
-            image_writer_processes=5,
+            image_writer_threads=20,
+            image_writer_processes=10,
         )
     else:
         dataset = LeRobotDataset(repo_id=REPO_NAME, local_files_only=True)
@@ -107,13 +114,13 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
     # H5 Action Format:
     #   tensor Nx22
     #   1      1       7                7               6      
-    #   l_grip r_grip  l_joints+l_grip  r_joints_r_grip padding 
+    #   l_grip r_grip  l_joints+l_grip  r_joints+r_grip padding 
     #
     # Aloha Action Format:
     #   tensor Nx14
     #   6        1       6         1
     #   l_joints l_grip  r_joints  r_grip
-    
+
     for raw_dataset_name, task_instruction in DATASET_TASK.items():
         # raw_dataset_name, task_instruction = pair    
         hdf5s_path = os.path.join(data_dir, raw_dataset_name)
@@ -165,11 +172,8 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
                     )
                 dataset.save_episode(task=task_instruction)
 
-    # pool = ThreadPool(POOL_SIZE)
-    # pool.map(func, [(k,v) for k,v in DATASET_TASK.items()]) 
-        # raw_dataset = tfds.load(raw_dataset_name, data_dir=data_dir, split="train")
     # Consolidate the dataset, skip computing stats since we will do that later
-    dataset.consolidate(run_compute_stats=False, keep_image_files = True)
+    dataset.consolidate(run_compute_stats=False, keep_image_files = False)
 
     # Optionally push to the Hugging Face Hub
     if push_to_hub:

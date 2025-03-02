@@ -39,6 +39,7 @@ dependencies = [
     "treescope>=0.1.7",
     "transformers==4.48.1",
     "ipdb>=0.13.13",
+    "mpi4py>=4.0.3",
 ]
 
 

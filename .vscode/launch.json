@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/examples/libero/convert_ours_to_lerobot.py",
             "args": [
-                "--data_dir", "/hy-tmp/likaiyu/resources/ours",
+                "create_from_scratch",
             ],
             "console": "integratedTerminal",
             "env": {
@@ -27,7 +27,8 @@
             // ],
             "console": "integratedTerminal",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"
+                "PYTHONPATH": "${workspaceFolder}",
+                "XDG_CACHE_HOME":"/pfstem/likaiyu/resources/.cache",
             },
             "envFile": "${workspaceFolder}/.env",
             "justMyCode": "false",
