@@ -1,6 +1,6 @@
 CONFIG=spi0_aloha_finetune_full
 # TASK=shirt_pretrains2_0225
-TASK=shirtflatten_0225_27_bases2_full
+TASK=shirtflatten_25_01_bases2_bs128_full
 CKPT=29999
 
 cd /root/PI_Official
@@ -8,10 +8,10 @@ source .venv/bin/activate
 export XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 #compute norm
-CUDA_VISIBLE_DEVICES=2 python scripts/compute_norm_stats.py --config_name $CONFIG --max_frames 10000
+# CUDA_VISIBLE_DEVICES=0 python scripts/compute_norm_stats.py --config_name $CONFIG --max_frames 20000
 
 #train model
-CUDA_VISIBLE_DEVICES=2,3 python scripts/train.py $CONFIG --exp-name=$TASK --resume
+CUDA_VISIBLE_DEVICES=0,1,2,3 python scripts/train.py $CONFIG --exp-name=$TASK --resume
 
 #zip ckpt
 cd /pfstem/likaiyu/resources/checkpoints/$CONFIG/$TASK

@@ -525,10 +525,51 @@ _CONFIGS = [
                 prompt_from_task=True,
             ),
         ),
+        batch_size=128,
+        num_workers=4,
+        fsdp_devices=4,
+        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_s2pretrain_full/shirt_pretrains2_halfall_retrain/9999/params"),
+        num_train_steps=30_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
+    ),
+    TrainConfig(
+        name="spi0_aloha_finetune_full2",
+        model=pi0.Pi0Config(action_horizon=25),
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id="FlattenShirt_GY",
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_finetune_full2",
+                asset_id="FlattenShirt_GY",
+            ),
+            adapt_to_pi=True,
+            default_prompt="fold the shirt",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            "prompt": "prompt",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
         batch_size=32,
         num_workers=4,
         fsdp_devices=2,
-        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_s2pretrain_full/shirt_pretrains2_0225/9999/params"),
+        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_s2pretrain_full/shirt_pretrains2_halfall_retrain/9999/params"),
         num_train_steps=30_000,
         lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
@@ -572,7 +613,7 @@ _CONFIGS = [
         batch_size=32,
         num_workers=4,
         fsdp_devices=2,
-        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_finetune_lora3/shirtflatten_0225_base0223/29999/params"),
+        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_s2pretrain_full/shirt_pretrains2_halfall_retrain/9999/params"),
         num_train_steps=30_000,
         lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
@@ -616,7 +657,7 @@ _CONFIGS = [
         batch_size=32,
         num_workers=4,
         fsdp_devices=2,
-        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_s2pretrain_full/shirt_pretrains2_0225/9999/params"),
+        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_s2pretrain_full/shirt_pretrains2_halfall_retrain/9999/params"),
         num_train_steps=30_000,
         lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",

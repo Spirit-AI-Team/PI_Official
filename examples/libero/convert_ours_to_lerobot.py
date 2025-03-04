@@ -38,15 +38,16 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 '''
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
-REPO_NAME = "FlattenShirt25_01"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "FlattenShirt_GY"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 dataset_paths = [
-                '/pfstem/likaiyu/resources/hdf5/0_1new',
-                '/pfstem/likaiyu/resources/hdf5/0_1new_0226',
-                '/pfstem/likaiyu/resources/hdf5/0_1new_0227',
-                '/pfstem/likaiyu/resources/hdf5/0_1new_0228',
-                '/pfstem/likaiyu/resources/hdf5/0_1new_0301',
+                '/pfstem/likaiyu/resources/hdf5/0_1_GY_25_01',
+                # '/pfstem/likaiyu/resources/hdf5/0_1new',
+                # '/pfstem/likaiyu/resources/hdf5/0_1new_0226',
+                # '/pfstem/likaiyu/resources/hdf5/0_1new_0227',
+                # '/pfstem/likaiyu/resources/hdf5/0_1new_0228',
+                # '/pfstem/likaiyu/resources/hdf5/0_1new_0301',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
