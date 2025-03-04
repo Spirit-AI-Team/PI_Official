@@ -38,18 +38,12 @@ uv run examples/libero/convert_ours_to_lerobot.py --data-dir /hy-tmp/lmz/pi0_dat
 param:
 create-from-scratch: create lerobot dataset from scratch. this will Clean up any existing dataset in the output directory
 '''
-POOL_SIZE = 9
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
-REPO_NAME = "temp"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "FlattenShirtNew"  # Name of the output dataset, also used for the Hugging Face Hub
 DATASET_TASK = {
 # '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL02_DYF03_PI0STEP01FINE_CXJ_ai_hdf5':'Flatten the shirt',
-'/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL03_DYF03_PI0STEPS01_WHJ_ai_hdf5':'Flatten the shirt',
-'/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL04_DYF03_PI0STEP01_GY_ai_hdf5':'Flatten the shirt',
-'/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL05_DYF03_PI0STEPS01_WYJ_ai_hdf5':'Flatten the shirt',
-'/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL07_DYF03_PI0STEP01_TCZ_ai_hdf5':'Flatten the shirt',
-'/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL08_DYF03_PI0STEPS01_LTJ_ai_hdf5':'Flatten the shirt',
-# '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL09_DYF03_PIOSTEP01FINE_SZH_ai_hdf5':'Flatten the shirt',
+    p:'Flatten the shirt' for p in dataset_files
 }
 
 def vidwrite(filename, images, framerate=10, vcodec='libx264'):
@@ -133,8 +127,8 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
                     "names": ["actions"],
                 },
             },
-            image_writer_threads=10,
-            image_writer_processes=5,
+            image_writer_threads=20,
+            image_writer_processes=10,
         )
     else:
         dataset = LeRobotDataset(repo_id=REPO_NAME, local_files_only=True)
@@ -151,13 +145,13 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
     # H5 Action Format:
     #   tensor Nx22
     #   1      1       7                7               6      
-    #   l_grip r_grip  l_joints+l_grip  r_joints_r_grip padding 
+    #   l_grip r_grip  l_joints+l_grip  r_joints+r_grip padding 
     #
     # Aloha Action Format:
     #   tensor Nx14
     #   6        1       6         1
     #   l_joints l_grip  r_joints  r_grip
-    
+
     for raw_dataset_name, task_instruction in DATASET_TASK.items():
         # raw_dataset_name, task_instruction = pair 
         cur_dataset_name = raw_dataset_name.split('/')[-1]   
@@ -211,44 +205,11 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
                     )
                 dataset.save_episode(task=task_instruction)
 
-                # visualize data
-                # import ipdb; ipdb.set_trace()
-                if epi_idx in episode_index_to_viz:
-                    gripper_widths_images = None
-                    full_images = []
-                    total_number_of_frames = len(value_dict['observation.images.cam_left_wrist'])
-                    for frame_idx in range(total_number_of_frames):
-                        camera0_rgb = value_dict['observation.images.cam_high'][frame_idx]
-                        camera1_rgb = value_dict['observation.images.cam_left_wrist'][frame_idx]
-                        camera2_rgb = value_dict['observation.images.cam_right_wrist'][frame_idx]
-                        camera_images = np.concatenate([camera1_rgb, camera0_rgb, camera2_rgb], axis=1)
-
-                        height, width, channel = camera_images.shape
-
-                        gripper_image_height = 50
-                        gripper_widths_images = 255 * np.ones((gripper_image_height, width, channel))
-                        robot0_gripper_widths = gripper_image_height * value_dict['actions'][:frame_idx+1, 6] / 5.0
-                        robot1_gripper_widths = gripper_image_height * value_dict['actions'][:frame_idx+1, 13] / 5.0
-                        coords_x = width * 1.0 * np.arange(frame_idx + 1) / (total_number_of_frames)
-
-                        robot0_points = np.stack([coords_x, robot0_gripper_widths], axis=-1).reshape((-1, 1, 2)).astype(np.int32)
-                        robot1_points = np.stack([coords_x, robot1_gripper_widths], axis=-1).reshape((-1, 1, 2)).astype(np.int32)
-
-                        gripper_widths_images = draw_line_on_images(gripper_widths_images, robot0_points, color=(81, 55, 255))
-                        gripper_widths_images = draw_line_on_images(gripper_widths_images, robot1_points, color=(107, 255, 51))
-
-                        full_image = np.concatenate([camera_images, gripper_widths_images], axis=0)
-                        full_images.append(full_image)
-
-                    output_video_path = os.path.join(output_video_dir, f"{cur_dataset_name}_episode_{epi_idx}.mp4")
-                    vidwrite(output_video_path, full_images, framerate=10)
-
-
     # pool = ThreadPool(POOL_SIZE)
     # pool.map(func, [(k,v) for k,v in DATASET_TASK.items()]) 
         # raw_dataset = tfds.load(raw_dataset_name, data_dir=data_dir, split="train")
     # Consolidate the dataset, skip computing stats since we will do that later
-    dataset.consolidate(run_compute_stats=False, keep_image_files = True)
+    dataset.consolidate(run_compute_stats=False, keep_image_files = False)
 
     # Optionally push to the Hugging Face Hub
     if push_to_hub:
