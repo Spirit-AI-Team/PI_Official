@@ -15,6 +15,7 @@ CUDA_VISIBLE_DEVICES=4,5 python scripts/train.py $CONFIG --exp-name=$TASK --resu
 
 #zip ckpt
 cd /pfstem/likaiyu/resources/checkpoints/$CONFIG/$TASK
+mv $CKPT/train_state ./
 zip -r $TASK.zip $CKPT
 
 #oss upload

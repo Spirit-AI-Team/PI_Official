@@ -129,7 +129,11 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
         hdf5_file_names.sort()
         for hdf5_file_name in tqdm.tqdm(hdf5_file_names, total=len(hdf5_file_names)):
             hdf5_file_path = os.path.join(hdf5s_path, hdf5_file_name)
-            mapping = {"observation.images.cam_high": 'camera0_rgb', "observation.images.cam_left_wrist": 'camera1_rgb', "observation.images.cam_right_wrist": 'camera2_rgb', "observation.state": ['robot0_gripper_width', 'robot1_gripper_width', 'robot_rjoint_rot_axis_angle'], "actions": ['robot0_gripper_width', 'robot1_gripper_width', 'robot_rjoint_rot_axis_angle']}
+            mapping = {"observation.images.cam_high": 'camera0_rgb', 
+                       "observation.images.cam_left_wrist": 'camera1_rgb', 
+                       "observation.images.cam_right_wrist": 'camera2_rgb', 
+                       "observation.state": ['robot0_gripper_width', 'robot1_gripper_width', 'robot_rjoint_rot_axis_angle'], 
+                       "actions": ['robot0_gripper_width', 'robot1_gripper_width', 'robot_rjoint_rot_axis_angle']}
             value_dict = {"observation.images.cam_high": None, "observation.images.cam_left_wrist": None, "observation.images.cam_right_wrist": None, "observation.state": None, "actions": None}
             with h5py.File(hdf5_file_path, "r") as ep:
 
