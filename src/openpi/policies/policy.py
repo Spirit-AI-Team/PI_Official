@@ -16,8 +16,6 @@ from openpi import transforms as _transforms
 from openpi.models import model as _model
 from openpi.shared import array_typing as at
 from openpi.shared import nnx_utils
-from openpi.policies import policy_config as _policy_config
-from openpi.training import config as _config
 
 BasePolicy: TypeAlias = _base_policy.BasePolicy
 

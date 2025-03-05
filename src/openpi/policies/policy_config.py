@@ -92,7 +92,7 @@ class MultiPolicyV2(_policy.Policy):
         self.policy1_setup = policy1_setup
         self.policy2_setup = policy2_setup
         policy1 = create_trained_policy(
-            _config.get_config(policy1_setup['config']), policy1_setup['dir'], default_prompt=policy1_setup['default_prompt1']
+            _config.get_config(policy1_setup['config']), policy1_setup['dir'], default_prompt=policy1_setup['default_prompt']
         )
         self.num_polices = 2
         self.cur_policy_index = 0
@@ -103,11 +103,11 @@ class MultiPolicyV2(_policy.Policy):
             self.cur_policy_index = (self.cur_policy_index + 1) % self.num_polices 
             if self.cur_policy_index == 0:
                 policy = create_trained_policy(
-                    _config.get_config(self.policy1_setup['config']), self.policy1_setup['dir'], default_prompt=self.policy1_setup['default_prompt1']
+                    _config.get_config(self.policy1_setup['config']), self.policy1_setup['dir'], default_prompt=self.policy1_setup['default_prompt']
                 )
             else:
                 policy = create_trained_policy(
-                    _config.get_config(self.policy2_setup['config']), self.policy2_setup['dir'], default_prompt=self.policy2_setup['default_prompt1']
+                    _config.get_config(self.policy2_setup['config']), self.policy2_setup['dir'], default_prompt=self.policy2_setup['default_prompt']
                 )
             self.cur_policy = policy
 
