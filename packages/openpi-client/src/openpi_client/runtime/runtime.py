@@ -83,10 +83,10 @@ class Runtime:
         action = self._agent.get_action(observation)
         self._environment.apply_action(action)
 
-        for subscriber in self._subscribers:
-            subscriber.on_step(observation, action)
+        # for subscriber in self._subscribers:
+        #     subscriber.on_step(observation, action)
 
-        if self._environment.is_episode_complete() or (
-            self._max_episode_steps > 0 and self._episode_steps >= self._max_episode_steps
-        ):
-            self.mark_episode_complete()
+        # if self._environment.is_episode_complete() or (
+        #     self._max_episode_steps > 0 and self._episode_steps >= self._max_episode_steps
+        # ):
+        #     self.mark_episode_complete()

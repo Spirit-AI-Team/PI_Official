@@ -22,6 +22,7 @@ class EnvMode(enum.Enum):
     SPI0_ARX = "spi0_arx"
     SPI0_ARX_LoRA = 'spi0_arx_lora'
     SPI0_ARX_LoRA2 = 'spi0_arx_lora2'
+    SPI0_ARX_LoRA3 = 'spi0_arx_lora3'
     SPI0_ARX_LoRA_Multi = 'spi0_arx_lora_multi'
     SPI0_ARX_FULL = 'spi0_arx_multi'
 @dataclasses.dataclass
@@ -71,19 +72,23 @@ DEFAULT_CHECKPOINT: dict[EnvMode, Checkpoint] = {
     ),
     EnvMode.SPI0_ARX: Checkpoint(
         config="spi0_aloha_finetune_full",
-        dir="checkpoints/dieyifu1_3_0218_debug/29999",
+        dir="checkpoints/shirtflatten_0225_27_bases2_full/29999",
     ),
     EnvMode.SPI0_ARX_FULL: Checkpoint(
         config="spi0_aloha_finetune_full",
-        dir="checkpoints/pi0mvp_multi_0220_full/20000",
+        dir="checkpoints/spi0_aloha_15steps_ftfull_0304/20000",
     ),
     EnvMode.SPI0_ARX_LoRA: Checkpoint(
         config="spi0_aloha_finetune_lora",
-        dir="checkpoints/dieyifu1_3_0219_lora/19999",
+        dir="checkpoints/shirtflatten_0225_27_bases2_lora/29999",
     ),
     EnvMode.SPI0_ARX_LoRA2: Checkpoint(
-        config="spi0_aloha_finetune_lora",
-        dir="checkpoints/dieyifu1_3_0219_lora_ah25/19999",
+        config="spi0_aloha_finetune_lora2",
+        dir="checkpoints/shirtfold_6step_bases2_lora/59999",
+    ),
+    EnvMode.SPI0_ARX_LoRA3: Checkpoint(
+        config="spi0_aloha_finetune_lora3",
+        dir="checkpoints/shirtflatten_0227_base0225_lora/29999",
     ),
     EnvMode.SPI0_ARX_LoRA_Multi: Checkpoint(
         config="spi0_aloha_finetune_lora",

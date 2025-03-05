@@ -494,13 +494,13 @@ _CONFIGS = [
     ),
     TrainConfig(
         name="spi0_aloha_finetune_full",
-        model=pi0.Pi0Config(),
+        model=pi0.Pi0Config(action_horizon=25),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="PI0_MVP_multi_v1",
+            repo_id="FoldTheShirt15Steps",
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_finetune_full",
-                asset_id="PI0_MVP_multi_v1",
+                asset_id="FoldTheShirt15Steps",
             ),
             adapt_to_pi=True,
             default_prompt="fold the shirt",
@@ -526,21 +526,23 @@ _CONFIGS = [
         batch_size=32,
         num_workers=4,
         fsdp_devices=2,
-        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        weight_loader=weight_loaders.CheckpointWeightLoader("checkpoints/shirtflatten_0225_base0223/29999/params"),
         num_train_steps=30_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(
         name="spi0_aloha_finetune_lora",
-        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
+        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora", action_horizon=25),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="PI0_MVP_multi_v1",#lky/Dieyifufix_1_3_0218
+            repo_id="FlattenShirtNew25_27",
             assets=AssetsConfig(
-                assets_dir="/hy-tmp/likaiyu/PI_Official/assets/spi0_aloha_finetune_full",
-                asset_id="PI0_MVP_multi_v1",
+                assets_dir="assets/spi0_aloha_finetune_lora",
+                asset_id="FlattenShirtNew25_27",
             ),
             adapt_to_pi=True,
-            default_prompt="fold the shirt",#Put the brown cup into the blue plate
+            default_prompt="fold the shirt",
             repack_transforms=_transforms.Group(
                 inputs=[
                     _transforms.RepackTransform(
@@ -564,11 +566,98 @@ _CONFIGS = [
             paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"
         ).get_freeze_filter(),
         batch_size=32,
-        fsdp_devices=1,
+        num_workers=4,
+        fsdp_devices=2,
+        weight_loader=weight_loaders.CheckpointWeightLoader("checkpoints/shirtflatten_0225_base0223/29999/params"),
+        num_train_steps=30_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
+    ),
+    TrainConfig(
+        name="spi0_aloha_finetune_lora2",
+        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora", action_horizon=25),
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id="FoldShirt6steps",
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_finetune_lora2",
+                asset_id="FoldShirt6steps",
+            ),
+            adapt_to_pi=True,
+            default_prompt="fold the shirt",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+            ),
+        ),
+        freeze_filter=pi0.Pi0Config(
+            paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"
+        ).get_freeze_filter(),
+        batch_size=32,
+        num_workers=4,
+        fsdp_devices=2,
         weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
         num_train_steps=30_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
-    
+    TrainConfig(
+        name="spi0_aloha_finetune_lora3",
+        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora", action_horizon=25),
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id="FlattenShirtNew_0227",
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_finetune_lora",
+                asset_id="FlattenShirtNew_0227",
+            ),
+            adapt_to_pi=True,
+            default_prompt="fold the shirt",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+            ),
+        ),
+        freeze_filter=pi0.Pi0Config(
+            paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"
+        ).get_freeze_filter(),
+        batch_size=32,
+        num_workers=4,
+        fsdp_devices=2,
+        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_finetune_full/flatten_shirt_0223/59999/params"),
+        num_train_steps=30_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
+    ),
+
     TrainConfig(
         name="pi0_libero_low_mem_finetune",
         model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
