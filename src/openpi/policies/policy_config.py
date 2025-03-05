@@ -109,7 +109,9 @@ class MultiPolicyV2(_policy.Policy):
                 policy = create_trained_policy(
                     _config.get_config(self.policy2_setup['config']), self.policy2_setup['dir'], default_prompt=self.policy2_setup['default_prompt']
                 )
+            pre_policy = self.cur_policy
             self.cur_policy = policy
+            del pre_policy
 
             print("cur policy: ", self.cur_policy._input_transform.transforms[0])
         
