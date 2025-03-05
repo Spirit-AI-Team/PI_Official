@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 import logging
 import pathlib
+import signal
 from typing import Any, TypeAlias
 
 import flax
@@ -58,6 +59,44 @@ class Policy(BasePolicy):
     @property
     def metadata(self) -> dict[str, Any]:
         return self._metadata
+
+
+class MultiPolicy(Policy):
+    def __init__(self, policy1, policy2):
+        self.policy1 = policy1
+        self.policy2 = policy2
+        self.num_polices = 2
+        self.cur_policy_index = 0
+        self.cur_policy = self.policy1
+
+        def handler(signum, frame):
+            print("switch policy!!!")
+            self.cur_policy_index = (self.cur_policy_index + 1) % self.num_polices 
+            if self.cur_policy_index == 0:
+                self.cur_policy = self.policy1
+            else:
+                self.cur_policy = self.policy2
+        
+        signal.signal(signal.SIGINT, handler)
+
+    @override
+    def infer(self, obs: dict) -> dict:  # type: ignore[misc]
+        # Make a copy since transformations may modify the inputs in place.
+        inputs = jax.tree.map(lambda x: x, obs)
+        inputs = self.cur_policy._input_transform(inputs)
+        # Make a batch and convert to jax.Array.
+        inputs = jax.tree.map(lambda x: jnp.asarray(x)[np.newaxis, ...], inputs)
+
+        self._rng, sample_rng = jax.random.split(self.cur_policy._rng)
+        outputs = {
+            "state": inputs["state"],
+            "actions": self.cur_policy._sample_actions(sample_rng, _model.Observation.from_dict(inputs), **self.cur_policy._sample_kwargs),
+        }
+
+        # Unbatch and convert to np.ndarray.
+        outputs = jax.tree.map(lambda x: np.asarray(x[0, ...]), outputs)
+        return self.cur_policy._output_transform(outputs)
+
 
 
 class PolicyRecorder(_base_policy.BasePolicy):
