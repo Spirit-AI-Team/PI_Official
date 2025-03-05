@@ -69,7 +69,7 @@ class MultiPolicy(Policy):
         self.cur_policy_index = 0
         self.cur_policy = self.policy1
 
-        def handler(signum, frame):
+        def switch_handler(signum, frame):
             print("switch policy!!!")
             self.cur_policy_index = (self.cur_policy_index + 1) % self.num_polices 
             if self.cur_policy_index == 0:
@@ -77,7 +77,7 @@ class MultiPolicy(Policy):
             else:
                 self.cur_policy = self.policy2
         
-        signal.signal(signal.SIGINT, handler)
+        signal.signal(signal.SIGCONT, switch_handler)
 
     @override
     def infer(self, obs: dict) -> dict:  # type: ignore[misc]
