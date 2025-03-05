@@ -101,52 +101,6 @@ class MultiPolicy(Policy):
         outputs = jax.tree.map(lambda x: np.asarray(x[0, ...]), outputs)
         return self.cur_policy._output_transform(outputs)
 
-class MultiPolicyV2(Policy):
-    def __init__(self, policy1_setup, policy2_setup):
-        self.policy1_setup = policy1_setup
-        self.policy2_setup = policy2_setup
-        policy1 = _policy_config.create_trained_policy(
-            _config.get_config(policy1_setup['config']), policy1_setup['dir'], default_prompt=policy1_setup['default_prompt1']
-        )
-        self.num_polices = 2
-        self.cur_policy_index = 0
-        self.cur_policy = policy1
-
-        def switch_handler(signum, frame):
-            print("switch policy!!!")
-            self.cur_policy_index = (self.cur_policy_index + 1) % self.num_polices 
-            if self.cur_policy_index == 0:
-                policy = _policy_config.create_trained_policy(
-                    _config.get_config(self.policy1_setup['config']), self.policy1_setup['dir'], default_prompt=self.policy1_setup['default_prompt1']
-                )
-            else:
-                policy = _policy_config.create_trained_policy(
-                    _config.get_config(self.policy2_setup['config']), self.policy2_setup['dir'], default_prompt=self.policy2_setup['default_prompt1']
-                )
-            self.cur_policy = policy
-
-            print("cur policy: ", self.cur_policy._input_transform.transforms[0])
-        
-        signal.signal(signal.SIGCONT, switch_handler)
-
-    @override
-    def infer(self, obs: dict) -> dict:  # type: ignore[misc]
-        # Make a copy since transformations may modify the inputs in place.
-        inputs = jax.tree.map(lambda x: x, obs)
-        inputs = self.cur_policy._input_transform(inputs)
-        # Make a batch and convert to jax.Array.
-        inputs = jax.tree.map(lambda x: jnp.asarray(x)[np.newaxis, ...], inputs)
-
-        self._rng, sample_rng = jax.random.split(self.cur_policy._rng)
-        outputs = {
-            "state": inputs["state"],
-            "actions": self.cur_policy._sample_actions(sample_rng, _model.Observation.from_dict(inputs), **self.cur_policy._sample_kwargs),
-        }
-
-        # Unbatch and convert to np.ndarray.
-        outputs = jax.tree.map(lambda x: np.asarray(x[0, ...]), outputs)
-        return self.cur_policy._output_transform(outputs)
-
 
 class PolicyRecorder(_base_policy.BasePolicy):
     """Records the policy's behavior to disk."""

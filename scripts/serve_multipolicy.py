@@ -160,7 +160,7 @@ def create_multipolicy(args: Args) -> _policy.MultiPolicy:
         case Default():
             policy2 = create_default_policy(args.env, default_prompt=args.default_prompt2)
 
-    multipolicy = _policy.MultiPolicyV2(policy1_setup, policy2_setup)
+    multipolicy = _policy_config.MultiPolicyV2(policy1_setup, policy2_setup)
     return multipolicy
 
 def main(args: Args) -> None:
