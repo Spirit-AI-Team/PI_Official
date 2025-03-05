@@ -137,20 +137,30 @@ def create_multipolicy(args: Args) -> _policy.MultiPolicy:
     """Create a multipolicy from the given arguments."""
     match args.policy1:
         case Checkpoint():
-            policy1 = _policy_config.create_trained_policy(
-                _config.get_config(args.policy1.config), args.policy1.dir, default_prompt=args.default_prompt1
-            )
+            policy1_setup = {
+                'config': args.policy1.config,
+                'dir': args.policy1.dir,
+                'default_prompt': args.default_prompt1
+            }
+            # policy1 = _policy_config.create_trained_policy(
+            #     _config.get_config(args.policy1.config), args.policy1.dir, default_prompt=args.default_prompt1
+            # )
         case Default():
             policy1 = create_default_policy(args.env, default_prompt=args.default_prompt1)
     match args.policy2:
         case Checkpoint():
-            policy2 = _policy_config.create_trained_policy(
-                _config.get_config(args.policy2.config), args.policy2.dir, default_prompt=args.default_prompt2
-            )
+            policy2_setup = {
+                'config':args.policy2.config,
+                'dir': args.policy2.dir,
+                'default_prompt': args.default_prompt2
+            }
+            # policy2 = _policy_config.create_trained_policy(
+            #     _config.get_config(args.policy2.config), args.policy2.dir, default_prompt=args.default_prompt2
+            # )
         case Default():
             policy2 = create_default_policy(args.env, default_prompt=args.default_prompt2)
 
-    multipolicy = _policy.MultiPolicy(policy1, policy2)
+    multipolicy = _policy.MultiPolicyV2(policy1_setup, policy2_setup)
     return multipolicy
 
 def main(args: Args) -> None:
