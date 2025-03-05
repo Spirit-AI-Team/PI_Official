@@ -118,7 +118,7 @@ class ActionChunkBroker2(_base_policy.BasePolicy):
 
         for i in range(act_dim): 
             new_actions[i] = np.interp(np.linspace(0, 1, self._frequency), np.linspace(0,1,self._action_horizon), actions.T[i])
-            if i == 6:
+            if i == 6 or i == 13:
                 new_actions[i] -= 1
         # arrow_actions = pa.array(new_actions.T)
         new_results = {'actions': new_actions.T}
