@@ -76,6 +76,8 @@ class MultiPolicy(Policy):
                 self.cur_policy = self.policy1
             else:
                 self.cur_policy = self.policy2
+
+            print("cur policy: ", self.cur_policy._input_transform.transforms[0])
         
         signal.signal(signal.SIGCONT, switch_handler)
 

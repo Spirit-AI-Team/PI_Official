@@ -50,7 +50,8 @@ class Args:
 
     # If provided, will be used in case the "prompt" key is not present in the data, or if the model doesn't have a default
     # prompt.
-    default_prompt: str | None = None
+    default_prompt1: str | None = None
+    default_prompt2: str | None = None
 
     # Port to serve the policy on.
     port: int = 8000
@@ -137,17 +138,17 @@ def create_multipolicy(args: Args) -> _policy.MultiPolicy:
     match args.policy1:
         case Checkpoint():
             policy1 = _policy_config.create_trained_policy(
-                _config.get_config(args.policy1.config), args.policy1.dir, default_prompt=args.default_prompt
+                _config.get_config(args.policy1.config), args.policy1.dir, default_prompt=args.default_prompt1
             )
         case Default():
-            policy1 = create_default_policy(args.env, default_prompt=args.default_prompt)
+            policy1 = create_default_policy(args.env, default_prompt=args.default_prompt1)
     match args.policy2:
         case Checkpoint():
             policy2 = _policy_config.create_trained_policy(
-                _config.get_config(args.policy2.config), args.policy2.dir, default_prompt=args.default_prompt
+                _config.get_config(args.policy2.config), args.policy2.dir, default_prompt=args.default_prompt2
             )
         case Default():
-            policy2 = create_default_policy(args.env, default_prompt=args.default_prompt)
+            policy2 = create_default_policy(args.env, default_prompt=args.default_prompt2)
 
     multipolicy = _policy.MultiPolicy(policy1, policy2)
     return multipolicy
