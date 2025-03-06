@@ -147,7 +147,7 @@ def create_trained_policy_v2(
         model,
         transforms=[
             *repack_transforms.inputs,
-            transforms.InjectDefaultPrompt(default_prompt1),
+            transforms.InjectDefaultPrompt(default_prompt2),
             *data_config.data_transforms.inputs,
             transforms.Normalize(norm_stats, use_quantiles=data_config.use_quantile_norm),
             *data_config.model_transforms.inputs,
