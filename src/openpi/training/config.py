@@ -575,10 +575,10 @@ _CONFIGS = [
         model=pi0.Pi0Config(action_horizon=25),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="FoldTheShirt15StepsQuick",
+            repo_id="Fold_Flatten_Shirt_0305",
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_finetune_flattenfold",
-                asset_id="FoldTheShirt15StepsQuick",
+                asset_id="Fold_Flatten_Shirt_0305",
             ),
             adapt_to_pi=True,
             # default_prompt="Fold the shirt",
