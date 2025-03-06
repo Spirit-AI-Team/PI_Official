@@ -497,10 +497,10 @@ _CONFIGS = [
         model=pi0.Pi0Config(action_horizon=25),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="FoldTheShirt15Steps",
+            repo_id="eefmvp",
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_finetune_full",
-                asset_id="FoldTheShirt15Steps",
+                asset_id="eefmvp",
             ),
             adapt_to_pi=True,
             default_prompt="fold the shirt",
@@ -657,7 +657,49 @@ _CONFIGS = [
         lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
-
+    TrainConfig(
+        name="spi0_aloha_eef_lora",
+        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora", action_horizon=60),
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id="eefmvp",
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_eef_lora",
+                asset_id="eefmvp",
+            ),
+            adapt_to_pi=False,
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            "prompt": "prompt",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        freeze_filter=pi0.Pi0Config(
+            paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"
+        ).get_freeze_filter(),
+        batch_size=32,
+        num_workers=4,
+        fsdp_devices=2,
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        num_train_steps=30_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
+    ),
     TrainConfig(
         name="pi0_libero_low_mem_finetune",
         model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),

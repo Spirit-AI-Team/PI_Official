@@ -87,8 +87,8 @@ DEFAULT_CHECKPOINT: dict[EnvMode, Checkpoint] = {
         dir="checkpoints/shirtfold_6step_bases2_lora/59999",
     ),
     EnvMode.SPI0_ARX_LoRA3: Checkpoint(
-        config="spi0_aloha_finetune_lora3",
-        dir="checkpoints/shirtflatten_0227_base0225_lora/29999",
+        config="spi0_aloha_eef_lora",
+        dir="checkpoints/shirtfold3step_eefmvp_0305/29999",
     ),
     EnvMode.SPI0_ARX_LoRA_Multi: Checkpoint(
         config="spi0_aloha_finetune_lora",
