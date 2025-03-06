@@ -6,7 +6,7 @@ POLICY1_DIR=/home/spirit-ai/codebase/PI_Official/checkpoints/shirtflatten_0225_2
 POLICY1_PROMPT="fold the shirt"
 
 POLICY2_CONFIG=spi0_aloha_finetune_full_15steps
-POLICY2_DIR=/home/spirit-ai/codebase/PI_Official/checkpoints/spi0_aloha_15steps_quick_ftfull_0305/20000
+POLICY2_DIR=/home/spirit-ai/codebase/PI_Official/checkpoints/spi0_aloha_15steps_quick_ftfull_0305/59999
 POLICY2_PROMPT="Fold the shirt"
 
 # python scripts/serve_policy.py --default_prompt="${POLICY1_PROMPT}" policy:checkpoint --policy.config=$POLICY1_CONFIG --policy.dir=$POLICY1_DIR 

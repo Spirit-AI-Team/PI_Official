@@ -71,7 +71,6 @@ class Runtime:
         logging.info("Starting execution thread...")
         while True:  
                 self.action_event.wait()
-                
                 self._run_exec()
                 self.action_event.clear()
 
