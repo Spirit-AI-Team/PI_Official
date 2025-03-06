@@ -1,6 +1,6 @@
-CONFIG=spi0_aloha_finetune_full2
+CONFIG=spi0_aloha_eef_lora
 # TASK=shirt_pretrains2_0225
-TASK=shirtflatten_25_01_bases2_full_old
+TASK=shirtfold3step_eefmvp_0305
 CKPT=29999
 
 cd /root/PI_Official

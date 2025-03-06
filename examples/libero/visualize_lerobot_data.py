@@ -11,7 +11,8 @@ from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
 import ffmpeg
 from pathlib import Path
 
-REPO_NAME = "FoldTheShirt15Steps"
+# set the LEROBOT_HOME and REPO_NAME to the dataset you need.
+REPO_NAME = "eefmvp"
 
 def vidwrite(filename, images, framerate=10, vcodec='libx264'):
     """
@@ -58,10 +59,9 @@ def draw_value_on_image(images, values, val_range=[0, 1], color=(81, 55, 255)):
     images = draw_line_on_images(images, values, color)
     return images
 
-def main(num_episodes_to_visualize=20):
-    # set the LEROBOT_HOME and REPO_NAME to the dataset you need.
-    LEROBOT_HOME = Path('/pfstem/wenxuan/resources/lerobot_15steps')
-    dataset = LeRobotDataset(root=LEROBOT_HOME, repo_id=REPO_NAME, local_files_only=True)
+def main(num_episodes_to_visualize=10):
+    # LEROBOT_HOME = Path('/pfstem/wenxuan/resources/lerobot_15steps')
+    dataset = LeRobotDataset(repo_id=REPO_NAME, local_files_only=True)
 
     num_episodes = dataset.num_episodes
 
@@ -161,7 +161,7 @@ def main(num_episodes_to_visualize=20):
             full_images.append(full_image)
 
         output_video_path = os.path.join(output_video_dir, f"episode_{episodes_idx}.mp4")
-        vidwrite(output_video_path, full_images, framerate=10)
+        vidwrite(output_video_path, full_images, framerate=30)
 
 if __name__ == "__main__":
     main()

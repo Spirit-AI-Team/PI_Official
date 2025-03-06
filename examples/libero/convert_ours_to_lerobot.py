@@ -30,7 +30,7 @@ import torch
 import tqdm
 import numpy as np
 import time
-
+import ipdb
 '''
 uv run examples/libero/convert_ours_to_lerobot.py --data-dir /hy-tmp/lmz/pi0_data/example --create-from-scratch
 param:
@@ -38,14 +38,33 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 '''
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
-REPO_NAME = "FlattenShirt_GY"  # Name of the output dataset, also used for the Hugging Face Hub
+FPS = 10
+REPO_NAME = "Fold_Flatten_Shirt_0305"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
+JOINT_MAPPING = {
+    "observation.images.cam_high": 'camera0_rgb', 
+    "observation.images.cam_left_wrist": 'camera1_rgb', 
+    "observation.images.cam_right_wrist": 'camera2_rgb', 
+    "observation.state": ['robot0_gripper_width', 'robot1_gripper_width', 'robot_rjoint_rot_axis_angle'], 
+    "actions": ['robot0_gripper_width', 'robot1_gripper_width', 'robot_rjoint_rot_axis_angle'],
+}
+
+EEF_MAPPING = {
+    "observation.images.cam_high": 'camera0_rgb', 
+    "observation.images.cam_left_wrist": 'camera1_rgb', 
+    "observation.images.cam_right_wrist": 'camera2_rgb',
+    "observation.state":['robot0_eef_pos', 'robot0_eef_rot_axis_angle', 'robot0_gripper_width', 'robot1_eef_pos', 'robot1_eef_rot_axis_angle', 'robot1_gripper_width'],
+    "actions":['robot0_cmd_eef_pos', 'robot0_cmd_eef_rot_axis_angle', 'robot0_gripper_width', 'robot1_cmd_eef_pos', 'robot1_cmd_eef_rot_axis_angle', 'robot1_gripper_width'],
+}
+
 dataset_paths = [
-                '/pfstem/likaiyu/resources/hdf5/0_1_GY_25_01',
-                # '/pfstem/likaiyu/resources/hdf5/0_1new',
-                # '/pfstem/likaiyu/resources/hdf5/0_1new_0226',
-                # '/pfstem/likaiyu/resources/hdf5/0_1new_0227',
+                # '/pfstem/likaiyu/resources/hdf5/eefmvp0305',
+                '/pfstem/likaiyu/resources/hdf5/0_1new',
+                '/pfstem/likaiyu/resources/hdf5/0_1new_0226',
+                '/pfstem/likaiyu/resources/hdf5/0_1new_0227',
+                '/pfstem/wenxuan/resources/hdf5/15steps_quick',
+                '/pfstem/wenxuan/resources/hdf5/9steps_quick',
                 # '/pfstem/likaiyu/resources/hdf5/0_1new_0228',
                 # '/pfstem/likaiyu/resources/hdf5/0_1new_0301',
                 ]
@@ -53,14 +72,17 @@ dataset_files = []
 for dataset_path in dataset_paths:
     dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'tar.gz' not in p]
 
-DATASET_TASK = {
+DATASET_TASK = {}
 # '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL02_DYF03_PI0STEP01FINE_CXJ_ai_hdf5':'Flatten the shirt',
-    p:'Flatten the shirt' for p in dataset_files
-}
+for p in dataset_files:
+    DATASET_TASK[p] = 'Flatten the shirt' if 'QUICK' not in p else 'Fold the shirt'
 
+
+# ipdb.set_trace()
 def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *, 
          push_to_hub: bool = False, 
          create_from_scratch: bool = True,
+         mapping:dict = JOINT_MAPPING,
          ):
     # Clean up any existing dataset in the output directory
     if create_from_scratch:
@@ -76,7 +98,7 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
         dataset = LeRobotDataset.create(
             repo_id=REPO_NAME,
             robot_type="aloha",
-            fps=10,
+            fps=FPS,
             features={
                 "observation.images.cam_high": {
                     "dtype": "image",
@@ -104,7 +126,7 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
                     "names": ["actions"],
                 },
             },
-            image_writer_threads=20,
+            image_writer_threads=40,
             image_writer_processes=10,
         )
     else:
@@ -129,11 +151,6 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
         hdf5_file_names.sort()
         for hdf5_file_name in tqdm.tqdm(hdf5_file_names, total=len(hdf5_file_names)):
             hdf5_file_path = os.path.join(hdf5s_path, hdf5_file_name)
-            mapping = {"observation.images.cam_high": 'camera0_rgb', 
-                       "observation.images.cam_left_wrist": 'camera1_rgb', 
-                       "observation.images.cam_right_wrist": 'camera2_rgb', 
-                       "observation.state": ['robot0_gripper_width', 'robot1_gripper_width', 'robot_rjoint_rot_axis_angle'], 
-                       "actions": ['robot0_gripper_width', 'robot1_gripper_width', 'robot_rjoint_rot_axis_angle']}
             value_dict = {"observation.images.cam_high": None, "observation.images.cam_left_wrist": None, "observation.images.cam_right_wrist": None, "observation.state": None, "actions": None}
             with h5py.File(hdf5_file_path, "r") as ep:
 
@@ -145,7 +162,8 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
                             # print(each_key, ep[each_key].shape, type(ep[each_key]))
                             v.append(torch.from_numpy(np.array(ep[each_key])))
                         v = torch.cat(v, dim=1)
-                        v = v[..., 2:16]
+                        if mapping == JOINT_MAPPING:
+                            v = v[..., 2:16]
                         value_dict[key] = v
                     else:
                         value_dict[key] = torch.from_numpy(np.array(ep[mapping[key]]))

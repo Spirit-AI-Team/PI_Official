@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/examples/libero/convert_ours_to_lerobot.py",
             "args": [
-                "create_from_scratch",
+                "--create_from_scratch",
             ],
             "console": "integratedTerminal",
             "env": {
@@ -50,6 +50,7 @@
             "console": "integratedTerminal",
             "env": {
                 "XLA_PYTHON_CLIENT_MEM_FRACTION":"0.9",
+                // "XLA_PYTHON_CLIENT_PREALLOCATE":"false",
                 "PYTHONPATH": "${workspaceFolder}",
                 // "CUDA_VISIBLE_DEVICES":"1",
             },
