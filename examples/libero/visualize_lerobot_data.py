@@ -62,6 +62,7 @@ def main(num_episodes_to_visualize=20):
     # set the LEROBOT_HOME and REPO_NAME to the dataset you need.
     LEROBOT_HOME = Path('/pfstem/wenxuan/resources/lerobot_15steps')
     dataset = LeRobotDataset(root=LEROBOT_HOME, repo_id=REPO_NAME, local_files_only=True)
+    fps = dataset.fps
 
     num_episodes = dataset.num_episodes
 
@@ -86,13 +87,14 @@ def main(num_episodes_to_visualize=20):
             camera2_rgb = (value_dict['observation.images.cam_right_wrist'].permute(1, 2, 0).numpy() * 255).astype(np.uint8)
             camera_images = np.concatenate([camera1_rgb, camera0_rgb, camera2_rgb], axis=1)
             camera_images = np.ascontiguousarray(camera_images, dtype=np.uint8)
+            height, width, channel = camera_images.shape
 
             # draw prompt
             task_index = value_dict['task_index'].item()
             prompt = dataset.meta.tasks[task_index]
-            cv2.putText(camera_images, prompt, (5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 1)
+            cv2.putText(camera_images, prompt, (5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 1)
+            cv2.putText(camera_images, str(fps) + " fps", (width - 200, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 1)
 
-            height, width, channel = camera_images.shape
             frame_idx = data_idx - ep_start.item()
 
             # draw gripper widths
@@ -161,7 +163,7 @@ def main(num_episodes_to_visualize=20):
             full_images.append(full_image)
 
         output_video_path = os.path.join(output_video_dir, f"episode_{episodes_idx}.mp4")
-        vidwrite(output_video_path, full_images, framerate=10)
+        vidwrite(output_video_path, full_images, framerate=fps)
 
 if __name__ == "__main__":
     main()
