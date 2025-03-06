@@ -60,9 +60,7 @@ class Args:
 
     # Specifies how to load the policy. If not provided, the default policy for the environment will be used.
     # policy: Checkpoint | Default = dataclasses.field(default_factory=Default)
-    policy1: Checkpoint | Default = dataclasses.field(default_factory=Default)
-    policy2: Checkpoint | Default = dataclasses.field(default_factory=Default)
-
+    policy: Checkpoint | Default = dataclasses.field(default_factory=Default)
 
 # Default checkpoints that should be used for each environment.
 DEFAULT_CHECKPOINT: dict[EnvMode, Checkpoint] = {
@@ -135,32 +133,15 @@ def create_policy(args: Args) -> _policy.Policy:
 
 def create_multipolicy(args: Args) -> _policy.MultiPolicy:
     """Create a multipolicy from the given arguments."""
-    match args.policy1:
+    match args.policy:
         case Checkpoint():
-            policy1_setup = {
-                'config': args.policy1.config,
-                'dir': args.policy1.dir,
-                'default_prompt': args.default_prompt1
-            }
-            # policy1 = _policy_config.create_trained_policy(
-            #     _config.get_config(args.policy1.config), args.policy1.dir, default_prompt=args.default_prompt1
-            # )
+            policy1, policy2 = _policy_config.create_trained_policy_v2(
+                _config.get_config(args.policy.config), args.policy.dir, default_prompt1=args.default_prompt1, default_prompt2=args.default_prompt2
+            )
         case Default():
-            policy1 = create_default_policy(args.env, default_prompt=args.default_prompt1)
-    match args.policy2:
-        case Checkpoint():
-            policy2_setup = {
-                'config':args.policy2.config,
-                'dir': args.policy2.dir,
-                'default_prompt': args.default_prompt2
-            }
-            # policy2 = _policy_config.create_trained_policy(
-            #     _config.get_config(args.policy2.config), args.policy2.dir, default_prompt=args.default_prompt2
-            # )
-        case Default():
-            policy2 = create_default_policy(args.env, default_prompt=args.default_prompt2)
+            policy = create_default_policy(args.env, default_prompt=args.default_prompt1)
 
-    multipolicy = _policy_config.MultiPolicyV2(policy1_setup, policy2_setup)
+    multipolicy = _policy.MultiPolicy(policy1, policy2)
     return multipolicy
 
 def main(args: Args) -> None:
