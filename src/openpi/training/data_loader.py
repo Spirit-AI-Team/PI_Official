@@ -8,7 +8,15 @@ import jax
 import jax.numpy as jnp
 import lerobot.common.datasets.lerobot_dataset as lerobot_dataset
 import numpy as np
+import json
 import torch
+from torch.utils.data.dataset import ConcatDataset
+from torch.utils.data.sampler import WeightedRandomSampler
+# from openpi.training.multi_task_batch_scheduler import MultiDataset
+import copy
+import tyro
+import openpi.training.sharding as sharding
+import openpi.training.utils as training_utils
 
 import openpi.models.model as _model
 import openpi.training.config as _config
@@ -96,7 +104,6 @@ def create_dataset(data_config: _config.DataConfig, model_config: _model.BaseMod
             key: [t / dataset_meta.fps for t in range(model_config.action_horizon)]
             for key in data_config.action_sequence_keys
         },
-        # episodes=[0,1,2,3,4,5,6,7,8],
         local_files_only=data_config.local_files_only,
     )
 
@@ -129,13 +136,13 @@ def transform_dataset(dataset: Dataset, data_config: _config.DataConfig, *, skip
 
 
 def create_data_loader(
-    config: _config.TrainConfig,
-    *,
-    sharding: jax.sharding.Sharding | None = None,
-    skip_norm_stats: bool = False,
-    shuffle: bool = False,
-    num_batches: int | None = None,
-    num_workers: int = 0,
+        config: _config.TrainConfig,
+        *,
+        sharding: jax.sharding.Sharding | None = None,
+        skip_norm_stats: bool = False,
+        shuffle: bool = False,
+        num_batches: int | None = None,
+        num_workers: int = 0,
 ) -> DataLoader[tuple[_model.Observation, _model.Actions]]:
     """Create a data loader for training.
 
@@ -181,17 +188,80 @@ def create_data_loader(
     return DataLoaderImpl(data_config, data_loader)
 
 
-class TorchDataLoader:
-    def __init__(
-        self,
-        dataset,
-        local_batch_size: int,
+def create_multi_data_loader(
+        config: _config.TrainConfig,
         *,
         sharding: jax.sharding.Sharding | None = None,
+        skip_norm_stats: bool = False,
         shuffle: bool = False,
         num_batches: int | None = None,
         num_workers: int = 0,
-        seed: int = 0,
+) -> DataLoader[tuple[_model.Observation, _model.Actions]]:
+    """Create a data loader for training.
+
+    Args:
+        config: The training configuration.
+        sharding: The sharding to use for the data loader. If None, the data loader will
+            use a single device sharding.
+        skip_norm_stats: Whether to skip data normalization.
+        shuffle: Whether to shuffle the data.
+        num_batches: Determines the number of batches to return. If the number exceeds the
+            number of batches in the dataset, the data loader will loop over the dataset.
+            If not provided, will iterate over the dataset indefinitely.
+        num_workers: The number of worker processes to use. If zero, the data loader will
+            execute in the main process.
+    """
+
+    tmp = copy.deepcopy(config)
+    num_datasets = len(config.data.repo_id)
+    datasets = dict()
+    for i in range(num_datasets):
+        config.data.repo_id = tmp.data.repo_id[i]
+        config.data.assets.asset_id = tmp.data.assets.asset_id[i]
+        data_config = config.data.create(config.assets_dirs, config.model)
+        dataset = create_dataset(data_config, config.model)
+        dataset = transform_dataset(dataset, data_config, skip_norm_stats=skip_norm_stats)
+
+        datasets[config.data.repo_id] = dataset
+
+    data_loader = TorchDataLoader(
+        datasets,
+        local_batch_size=config.batch_size // jax.process_count(),
+        sharding=sharding,
+        shuffle=shuffle,
+        num_batches=num_batches,
+        num_workers=num_workers,
+        seed=config.seed,
+        sample_weights_cfg=config.sample_weights_cfg,
+    )
+
+    class DataLoaderImpl(DataLoader):
+        def __init__(self, data_config: _config.DataConfig, data_loader: TorchDataLoader):
+            self._data_config = data_config
+            self._data_loader = data_loader
+
+        def data_config(self) -> _config.DataConfig:
+            return self._data_config
+
+        def __iter__(self):
+            for batch in self._data_loader:
+                yield _model.Observation.from_dict(batch), batch["actions"]
+
+    return DataLoaderImpl(data_config, data_loader)
+
+
+class TorchDataLoader:
+    def __init__(
+            self,
+            dataset,
+            local_batch_size: int,
+            *,
+            sharding: jax.sharding.Sharding | None = None,
+            shuffle: bool = False,
+            num_batches: int | None = None,
+            num_workers: int = 0,
+            seed: int = 0,
+            sample_weights_cfg: str = ''
     ):
         """Create a PyTorch data loader.
 
@@ -207,11 +277,40 @@ class TorchDataLoader:
             num_workers: The number of worker processes to use. If zero, the data loader will
                 execute in the main process.
             seed: The seed to use for shuffling the data.
+            sample_weights_cfg: sample weights for multi datasets
         """
         if jax.process_count() > 1:
             raise NotImplementedError("Data loading with multiple processes is not supported.")
 
-        if len(dataset) < local_batch_size:
+        sampler = None
+        if isinstance(dataset, dict):
+
+            with open(sample_weights_cfg, 'r') as file:
+                SAMPLE_WEIGHTS = json.load(file)
+            assert SAMPLE_WEIGHTS.keys() == dataset.keys()
+
+            # Weights of the each dataset in the collection to sample from
+            sample_weights = []
+            dataset_names = []
+            for dataset_name in dataset.keys():
+                sample_weights.append(SAMPLE_WEIGHTS[dataset_name])
+                dataset_names.append(dataset_name)
+
+            # Normalize the sample weights
+            sample_weights = np.array(sample_weights)
+            sample_weights = sample_weights / np.sum(sample_weights)
+
+            weights = []
+            for idx, dataset_name in enumerate(dataset_names):
+                weights.extend([sample_weights[idx]] * len(dataset[dataset_name]))
+
+            dataset = ConcatDataset([typing.cast(torch.utils.data.Dataset, ds) for _, ds in dataset.items()])
+
+            sampler = WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
+
+        torch_dataset = typing.cast(torch.utils.data.Dataset, dataset)
+
+        if len(torch_dataset) < local_batch_size:
             raise ValueError(f"Local batch size ({local_batch_size}) is larger than the dataset size ({len(dataset)}).")
 
         if sharding is None:
@@ -231,9 +330,10 @@ class TorchDataLoader:
         generator = torch.Generator()
         generator.manual_seed(seed)
         self._data_loader = torch.utils.data.DataLoader(
-            typing.cast(torch.utils.data.Dataset, dataset),
+            dataset=torch_dataset,
+            sampler=sampler if sampler else None,
             batch_size=local_batch_size,
-            shuffle=shuffle,
+            shuffle=shuffle if not sampler else False,
             num_workers=num_workers,
             multiprocessing_context=mp_context,
             persistent_workers=num_workers > 0,
@@ -275,3 +375,29 @@ def _worker_init_fn(worker_id: int) -> None:
     # means that this approach will not work for selecting the backend.
     os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
     os.environ["XLA_PYTHON_CLIENT_ALLOCATOR"] = "platform"
+
+
+def test_with_our_multi_dataset():
+    config = _config.get_config("pi0_aloha_pen_uncap")
+    mesh = sharding.make_mesh(config.fsdp_devices)
+
+    data_sharding = jax.sharding.NamedSharding(mesh, jax.sharding.PartitionSpec(sharding.DATA_AXIS))
+
+    data_loader = create_data_loader(
+        config,
+        sharding=data_sharding,
+        num_workers=config.num_workers,
+        shuffle=True,
+    )
+    assert data_loader.data_config().repo_id == config.data.repo_id
+
+    data_iter = iter(data_loader)
+    for batch_idx, batch in enumerate(data_iter):
+        obs, action = batch
+        print(batch_idx)
+        # print(f"Initialized data loader:\n{training_utils.array_tree_to_info(batch)}")
+        assert action.shape == (config.batch_size, config.model.action_horizon, config.model.action_dim)
+
+
+if __name__ == "__main__":
+    tyro.cli(test_with_our_multi_dataset)

@@ -220,7 +220,7 @@ def main(config: _config.TrainConfig):
     )
     init_wandb(config, resuming=resuming, enabled=config.wandb_enabled)
 
-    data_loader = _data_loader.create_data_loader(
+    data_loader = _data_loader.create_multi_data_loader(
         config,
         sharding=data_sharding,
         num_workers=config.num_workers,
