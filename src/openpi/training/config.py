@@ -747,6 +747,49 @@ _CONFIGS = [
         num_train_steps=10,
         wandb_enabled=False,
     ),
+    TrainConfig(
+        name="spi0_aloha_mix0+15_util0301_full",
+        model=pi0.Pi0Config(action_horizon=25),
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id="FlattenShirt25_01",
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_mix0+15_util0301_full",
+                asset_id="FlattenShirt25_01",  # only use 1st dataset
+            ),
+            adapt_to_pi=True,
+            default_prompt="fold the shirt",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            # "prompt": "prompt",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=False,
+            ),
+        ),
+        batch_size=128,
+        num_workers=8,
+        fsdp_devices=4,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=80_000),
+        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_finetune_full/shirtflatten_0225_27_bases2_full/29999/params"),
+        num_train_steps=80_000,
+        save_interval=10_000,
+        log_interval=10,
+        checkpoint_base_dir="/pfstem/lyc/checkpoints",
+    ),
 ]
 
 if len({config.name for config in _CONFIGS}) != len(_CONFIGS):

@@ -16,6 +16,7 @@ class Runtime:
         agent: _agent.Agent,
         subscribers: list[_subscriber.Subscriber],
         max_hz: float = 0,
+        action_duration: float=1,
         num_episodes: int = 1,
         max_episode_steps: int = 0,
     ) -> None:
@@ -23,6 +24,7 @@ class Runtime:
         self._agent = agent
         self._subscribers = subscribers
         self._max_hz = max_hz
+        self._action_duration = action_duration
         self._num_episodes = num_episodes
         self._max_episode_steps = max_episode_steps
 
@@ -57,7 +59,7 @@ class Runtime:
 
         self._in_episode = True
         self._episode_steps = 0
-        step_time = 1 / self._max_hz if self._max_hz > 0 else 0
+        step_time = self._action_duration / self._max_hz if self._max_hz > 0 else 0
         last_step_time = time.time()
 
         while self._in_episode:
