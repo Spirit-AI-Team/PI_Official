@@ -71,8 +71,10 @@ DEFAULT_CHECKPOINT: dict[EnvMode, Checkpoint] = {
         dir="s3://openpi-assets/checkpoints/pi0_aloha_towel",
     ),
     EnvMode.SPI0_ARX: Checkpoint(
-        config="spi0_aloha_mix0+15_util0301_full",
-        dir="checkpoints/spi0_aloha_mix0+15_util0301_full/79999",
+        # config="spi0_aloha_mix0+15_util0301_full",
+        # dir="checkpoints/spi0_aloha_mix0+15_util0301_full/79999",
+        config="spi0_aloha_mix0+15_pickData_util0301_full",
+        dir="checkpoints/spi0_aloha_mix0+15_pickData_util0301_full/19999",
     ),
     EnvMode.SPI0_ARX_FULL: Checkpoint(
         config="spi0_aloha_finetune_full",
