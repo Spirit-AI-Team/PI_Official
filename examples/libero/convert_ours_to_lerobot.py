@@ -38,8 +38,8 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 '''
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
-FPS = 10
-REPO_NAME = "Fold_Flatten_Shirt_0305"  # Name of the output dataset, also used for the Hugging Face Hub
+FPS = 30
+REPO_NAME = "Fold_Shirt_0311"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -59,30 +59,23 @@ EEF_MAPPING = {
 }
 
 dataset_paths = [
-                # '/pfstem/likaiyu/resources/hdf5/eefmvp0305',
-                '/pfstem/likaiyu/resources/hdf5/0_1new',
-                '/pfstem/likaiyu/resources/hdf5/0_1new_0226',
-                '/pfstem/likaiyu/resources/hdf5/0_1new_0227',
-                '/pfstem/wenxuan/resources/hdf5/15steps_quick',
-                '/pfstem/wenxuan/resources/hdf5/9steps_quick',
-                # '/pfstem/likaiyu/resources/hdf5/0_1new_0228',
-                # '/pfstem/likaiyu/resources/hdf5/0_1new_0301',
+                "/pfstem/wenxuan/resources/hdf5/15steps_quick_eef",
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
-    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'tar.gz' not in p]
+    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'QUICK_HF' in p]
 
 DATASET_TASK = {}
 # '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL02_DYF03_PI0STEP01FINE_CXJ_ai_hdf5':'Flatten the shirt',
 for p in dataset_files:
-    DATASET_TASK[p] = 'Flatten the shirt' if 'QUICK' not in p else 'Fold the shirt'
+    DATASET_TASK[p] = 'Flatten the shirt' if 'QUICK_HF' not in p else 'Fold the shirt'
 
 
 # ipdb.set_trace()
 def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *, 
          push_to_hub: bool = False, 
          create_from_scratch: bool = True,
-         mapping:dict = JOINT_MAPPING,
+         mapping:dict = EEF_MAPPING,
          ):
     # Clean up any existing dataset in the output directory
     if create_from_scratch:
@@ -127,7 +120,7 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
                 },
             },
             image_writer_threads=40,
-            image_writer_processes=10,
+            image_writer_processes=30,
         )
     else:
         dataset = LeRobotDataset(repo_id=REPO_NAME, local_files_only=True)
@@ -160,7 +153,10 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
                         v = []
                         for each_key in mapping[key]:
                             # print(each_key, ep[each_key].shape, type(ep[each_key]))
-                            v.append(torch.from_numpy(np.array(ep[each_key])))
+                            try:
+                                v.append(torch.from_numpy(np.array(ep[each_key])))
+                            except:
+                                import ipdb; ipdb.set_trace()
                         v = torch.cat(v, dim=1)
                         if mapping == JOINT_MAPPING:
                             v = v[..., 2:16]
