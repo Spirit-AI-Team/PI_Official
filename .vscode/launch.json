@@ -41,7 +41,7 @@
             "program": "${workspaceFolder}/scripts/train.py",
             "args": [
                 // "pi0_libero_simple_test",
-                "spi0_aloha_finetune_full",
+                "spi0_aloha_eef_full",
                 "--exp-name=test_full", 
                 "--no-wandb-enabled",
                 "--overwrite",
@@ -50,6 +50,7 @@
             "console": "integratedTerminal",
             "env": {
                 "XLA_PYTHON_CLIENT_MEM_FRACTION":"0.9",
+                "XDG_CACHE_HOME":"/pfstem/likaiyu/resources/.cache",
                 // "XLA_PYTHON_CLIENT_PREALLOCATE":"false",
                 "PYTHONPATH": "${workspaceFolder}",
                 // "CUDA_VISIBLE_DEVICES":"1",
@@ -76,6 +77,7 @@
             "env": {
                 "XLA_PYTHON_CLIENT_MEM_FRACTION":"0.9",
                 "PYTHONPATH": "${workspaceFolder}",
+                "XDG_CACHE_HOME":"/pfstem/likaiyu/resources/.cache",
                 // "CUDA_VISIBLE_DEVICES":"1",
             },
             "envFile": "${workspaceFolder}/.env",
@@ -98,6 +100,7 @@
             "env": {
                 "XLA_PYTHON_CLIENT_MEM_FRACTION":"0.9",
                 "PYTHONPATH": "${workspaceFolder}",
+                "XDG_CACHE_HOME":"/pfstem/likaiyu/resources/.cache",
                 "CUDA_VISIBLE_DEVICES":"0",
             },
             "envFile": "${workspaceFolder}/.env",

@@ -12,7 +12,7 @@ import ffmpeg
 from pathlib import Path
 
 # set the LEROBOT_HOME and REPO_NAME to the dataset you need.
-REPO_NAME = "eefmvp"
+REPO_NAME = "FlattenShirt_EEF_0306_11"
 
 def vidwrite(filename, images, framerate=10, vcodec='libx264'):
     """
@@ -39,8 +39,6 @@ def vidwrite(filename, images, framerate=10, vcodec='libx264'):
     process.stdin.close()
     process.wait()
 
-
-
 def draw_line_on_images(image, points, color=(81, 55, 255)):
     num_frames = len(points)
     if num_frames < 2:
@@ -59,16 +57,25 @@ def draw_value_on_image(images, values, val_range=[0, 1], color=(81, 55, 255)):
     images = draw_line_on_images(images, values, color)
     return images
 
-def main(num_episodes_to_visualize=20):
+from PIL import ImageFont, ImageDraw, Image
+def put_chinese_text(img, text, position, font_path='assets/SimHei.ttf', font_size=10, text_color=(255, 0, 0)):
+    font = ImageFont.truetype(font_path, font_size)
+    img_pil = Image.fromarray(img)
+    draw = ImageDraw.Draw(img_pil)
+    draw.text(position, text, font=font, fill=text_color)
+    img_np = np.array(img_pil)
+    return img_np
+    
+def main(num_episodes_to_visualize=20, episodes_idx_to_visualize = None):
     # set the LEROBOT_HOME and REPO_NAME to the dataset you need.
-    LEROBOT_HOME = Path('/pfstem/wenxuan/resources/lerobot_15steps')
-    dataset = LeRobotDataset(root=LEROBOT_HOME, repo_id=REPO_NAME, local_files_only=True)
-    fps = dataset.fps
-
+    # LEROBOT_HOME = Path('/pfstem/wenxuan/resources/lerobot_15steps')
+    dataset = LeRobotDataset(root=LEROBOT_HOME / REPO_NAME, repo_id=REPO_NAME, local_files_only=True)
+    fps = 30#dataset.fps
     num_episodes = dataset.num_episodes
 
     # visualize config
-    episodes_idx_to_visualize = np.random.choice(num_episodes, size=num_episodes_to_visualize)
+    if episodes_idx_to_visualize is None:
+        episodes_idx_to_visualize = np.random.choice(num_episodes, size=num_episodes_to_visualize)
 
     output_video_dir = os.path.join(LEROBOT_HOME, REPO_NAME, 'visualization_test')
     os.system(f'mkdir -p {output_video_dir}')
@@ -93,7 +100,8 @@ def main(num_episodes_to_visualize=20):
             # draw prompt
             task_index = value_dict['task_index'].item()
             prompt = dataset.meta.tasks[task_index]
-            cv2.putText(camera_images, prompt, (5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 1)
+            # cv2.putText(camera_images, prompt, (5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 1)
+            camera_images = put_chinese_text(camera_images, prompt, (5, 20), font_size=20, text_color=(255, 0, 0))
             cv2.putText(camera_images, str(fps) + " fps", (width - 200, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 1)
 
             frame_idx = data_idx - ep_start.item()

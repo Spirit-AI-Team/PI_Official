@@ -39,7 +39,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
 FPS = 10
-REPO_NAME = "Fold_Flatten_Shirt_0305"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "Shirt_Half_EEF_0306_11"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -50,7 +50,7 @@ JOINT_MAPPING = {
     "actions": ['robot0_gripper_width', 'robot1_gripper_width', 'robot_rjoint_rot_axis_angle'],
 }
 
-EEF_MAPPING = {
+EEF_MAPPING_CMD = {
     "observation.images.cam_high": 'camera0_rgb', 
     "observation.images.cam_left_wrist": 'camera1_rgb', 
     "observation.images.cam_right_wrist": 'camera2_rgb',
@@ -58,19 +58,29 @@ EEF_MAPPING = {
     "actions":['robot0_cmd_eef_pos', 'robot0_cmd_eef_rot_axis_angle', 'robot0_gripper_width', 'robot1_cmd_eef_pos', 'robot1_cmd_eef_rot_axis_angle', 'robot1_gripper_width'],
 }
 
+EEF_MAPPING = {
+    "observation.images.cam_high": 'camera0_rgb', 
+    "observation.images.cam_left_wrist": 'camera1_rgb', 
+    "observation.images.cam_right_wrist": 'camera2_rgb',
+     "observation.state":['robot0_eef_pos', 'robot0_eef_rot_axis_angle', 'robot0_gripper_width', 'robot1_eef_pos', 'robot1_eef_rot_axis_angle', 'robot1_gripper_width'],
+     "actions":['robot0_eef_pos', 'robot0_eef_rot_axis_angle', 'robot0_gripper_width', 'robot1_eef_pos', 'robot1_eef_rot_axis_angle', 'robot1_gripper_width'],
+}
+
 dataset_paths = [
-                # '/pfstem/likaiyu/resources/hdf5/eefmvp0305',
-                '/pfstem/likaiyu/resources/hdf5/0_1new',
-                '/pfstem/likaiyu/resources/hdf5/0_1new_0226',
-                '/pfstem/likaiyu/resources/hdf5/0_1new_0227',
-                '/pfstem/wenxuan/resources/hdf5/15steps_quick',
-                '/pfstem/wenxuan/resources/hdf5/9steps_quick',
-                # '/pfstem/likaiyu/resources/hdf5/0_1new_0228',
-                # '/pfstem/likaiyu/resources/hdf5/0_1new_0301',
+                    # '/root/PI_Official/data/hdf5/0_1foldshirt',
+                    # '/root/PI_Official/data/hdf5/0_1new_0225',
+                    # '/root/PI_Official/data/hdf5/0_1new_0226',
+                    # '/root/PI_Official/data/hdf5/0_1new_0227',
+                    # '/root/PI_Official/data/hdf5/0_1slow_0304',
+                    # '/pfstem/wenxuan/resources/hdf5/15steps_quick',
+                    # '/pfstem/wenxuan/resources/hdf5/9steps_quick',
+                    '/mnt/pfs-chihiro/20250306',
+                    '/mnt/pfs-chihiro/20250307',
+                    '/mnt/pfs-chihiro/20250310'
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
-    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'tar.gz' not in p]
+    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'FULL_HF' in p]
 
 DATASET_TASK = {}
 # '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL02_DYF03_PI0STEP01FINE_CXJ_ai_hdf5':'Flatten the shirt',
@@ -79,10 +89,10 @@ for p in dataset_files:
 
 
 # ipdb.set_trace()
-def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *, 
+def main(data_dir: str = '', *, 
          push_to_hub: bool = False, 
          create_from_scratch: bool = True,
-         mapping:dict = JOINT_MAPPING,
+         mapping:dict = EEF_MAPPING,
          ):
     # Clean up any existing dataset in the output directory
     if create_from_scratch:
@@ -155,7 +165,7 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
             with h5py.File(hdf5_file_path, "r") as ep:
 
                 for i, (key, item) in enumerate(value_dict.items()):
-                    # print(key, item.shape)
+                    # import ipdb;ipdb.set_trace()
                     if type(mapping[key]) == list:
                         v = []
                         for each_key in mapping[key]:

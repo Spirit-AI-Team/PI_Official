@@ -37,7 +37,7 @@ class AlohaInputs(transforms.DataTransformFn):
     # If true, this will convert the joint and gripper values from the standard Aloha space to
     # the space used by the pi internal runtime which was used to train the base model.
     adapt_to_pi: bool = True
-
+    interp_rate: int = 1
     # The expected cameras names. All input cameras must be in this set. Missing cameras will be
     # replaced with black images and the corresponding `image_mask` will be set to False.
     EXPECTED_CAMERAS: ClassVar[tuple[str, ...]] = ("cam_high", "cam_low", "cam_left_wrist", "cam_right_wrist")
@@ -84,6 +84,14 @@ class AlohaInputs(transforms.DataTransformFn):
         # Actions are only available during training.
         if "actions" in data:
             actions = np.asarray(data["actions"])
+            if self.interp_rate > 1:
+                action_horizon = actions.shape[0]
+                for i in range(actions.shape[1]):
+                    actions[:,i] = np.interp(
+                        np.linspace(0,1,action_horizon*self.interp_rate), 
+                        np.linspace(0,1,action_horizon),
+                        actions[:,i])[:action_horizon]
+
             actions = _encode_actions_inv(actions, adapt_to_pi=self.adapt_to_pi)
             inputs["actions"] = transforms.pad_to_dim(actions, self.action_dim)
 

@@ -1,6 +1,6 @@
 CONFIG=spi0_aloha_s2pretrain_full
 # TASK=shirt_pretrains2_0225
-TASK=shirt_pretrains2_halfall_retrain
+TASK=shirt_pretrains2_halfall_retrain_bs512
 CKPT=9999
 
 cd /root/PI_Official
@@ -11,7 +11,7 @@ export XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 # CUDA_VISIBLE_DEVICES=0 python scripts/compute_norm_stats.py --config_name $CONFIG --max_frames 20000
 
 #train model
-CUDA_VISIBLE_DEVICES=0,1,2,3 python scripts/train.py $CONFIG --exp-name=$TASK --resume
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python scripts/train.py $CONFIG --exp-name=$TASK --resume
 
 #zip ckpt
 cd /pfstem/likaiyu/resources/checkpoints/$CONFIG/$TASK
