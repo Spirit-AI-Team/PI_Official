@@ -747,14 +747,14 @@ _CONFIGS = [
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(
-        name="spi0_aloha_eef_full",
+        name="spi0_aloha_eef_15quick_full",
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="eefmvp",
+            repo_id="Fold_Shirt_0312",
             assets=AssetsConfig(
-                assets_dir="assets/spi0_aloha_eef_lora",
-                asset_id="eefmvp",
+                assets_dir="assets/spi0_aloha_eef_15quick_full",
+                asset_id="Fold_Shirt_0312",
             ),
             adapt_to_pi=False,
             repack_transforms=_transforms.Group(
@@ -778,13 +778,13 @@ _CONFIGS = [
                 prompt_from_task=True,
             ),
         ),
-        batch_size=32,
+        batch_size=64,
         num_workers=4,
-        fsdp_devices=2,
-        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        fsdp_devices=4,
+        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_eef_pretrain/shirtflatten_EEF_S2_pretrain_interp3/9999/params"),
         num_train_steps=30_000,
         lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
-        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
+        checkpoint_base_dir="/pfstem/wenxuan/resources/checkpoints",
     ),
     TrainConfig(
         name="spi0_aloha_eef_lora",

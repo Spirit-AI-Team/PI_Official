@@ -39,8 +39,6 @@ def create_dataset(config: _config.TrainConfig) -> tuple[_config.DataConfig, _da
 
 def main(config_name: str, max_frames: int | None = None):
     config = _config.get_config(config_name)
-    # import ipdb
-    # ipdb.set_trace()
     data_config, dataset = create_dataset(config)
     num_frames = len(dataset)
     shuffle = True

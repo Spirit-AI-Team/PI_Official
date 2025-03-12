@@ -12,7 +12,7 @@ import ffmpeg
 from pathlib import Path
 
 # set the LEROBOT_HOME and REPO_NAME to the dataset you need.
-REPO_NAME = "eefmvp"
+REPO_NAME = "Fold_Shirt_0312"
 
 def vidwrite(filename, images, framerate=10, vcodec='libx264'):
     """
@@ -61,7 +61,7 @@ def draw_value_on_image(images, values, val_range=[0, 1], color=(81, 55, 255)):
 
 def main(num_episodes_to_visualize=20):
     # set the LEROBOT_HOME and REPO_NAME to the dataset you need.
-    LEROBOT_HOME = Path('/pfstem/wenxuan/resources/lerobot_15steps')
+    LEROBOT_HOME = Path('/pfstem/wenxuan/resources/lerobot/Fold_Shirt_0312')
     dataset = LeRobotDataset(root=LEROBOT_HOME, repo_id=REPO_NAME, local_files_only=True)
     fps = dataset.fps
 
@@ -79,9 +79,11 @@ def main(num_episodes_to_visualize=20):
         total_number_of_frames = ep_end - ep_start + 1
         full_images = []
         actions = np.empty((0, 14))
+        states = np.empty((0, 14))
         for data_idx in range(ep_start, ep_end):
             value_dict = dataset[data_idx]
             actions = np.concatenate((actions, value_dict['actions'][None,...].numpy()), axis=0)
+            states = np.concatenate((states, value_dict['observation.state'][None,...].numpy()), axis=0)
 
             camera0_rgb = (value_dict['observation.images.cam_high'].permute(1, 2, 0).numpy() * 255).astype(np.uint8)
             camera1_rgb = (value_dict['observation.images.cam_left_wrist'].permute(1, 2, 0).numpy() * 255).astype(np.uint8)
@@ -109,7 +111,7 @@ def main(num_episodes_to_visualize=20):
             cv2.putText(gripper_widths_images, "gripper", (3, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
             # draw first rot
-            rot_range = [-np.pi, np.pi]
+            rot_range = [-1, 1]
             rot_height = 100
             rot_images0 = 255 * np.ones((rot_height, width, channel))
             robot0_points = np.stack([coords_x, - actions[:frame_idx+1, 0]], axis=-1)
@@ -135,6 +137,7 @@ def main(num_episodes_to_visualize=20):
             cv2.putText(rot_images2, "3rd rot", (3, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
             # draw forth rot
+            rot_range = [-np.pi, np.pi]
             rot_images3 = 255 * np.ones((rot_height, width, channel))
             robot0_points = np.stack([coords_x, - actions[:frame_idx+1, 3]], axis=-1)
             robot1_points = np.stack([coords_x, - actions[:frame_idx+1, 10]], axis=-1)

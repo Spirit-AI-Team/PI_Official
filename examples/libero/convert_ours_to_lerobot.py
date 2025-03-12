@@ -39,7 +39,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
 FPS = 30
-REPO_NAME = "Fold_Shirt_0311"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "Fold_Shirt_0312"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -59,7 +59,8 @@ EEF_MAPPING = {
 }
 
 dataset_paths = [
-                "/pfstem/wenxuan/resources/hdf5/15steps_quick_eef",
+                "/mnt/pfs-chihiro/20250311",
+                "/mnt/pfs-chihiro/20250310"
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
@@ -176,7 +177,7 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
                 normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6) 
                 value_dict['observation.state'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1] = normed_value * 5.
                 ##################
-                value_dict['action'] = value_dict['observation.state']
+                # value_dict['action'] = value_dict['observation.state']
 
                 len_traj = value_dict["observation.state"].shape[0]
                 for i in range(len_traj):
