@@ -37,10 +37,10 @@ uv run examples/libero/convert_ours_to_lerobot.py --data-dir /hy-tmp/lmz/pi0_dat
 param:
 create-from-scratch: create lerobot dataset from scratch. this will Clean up any existing dataset in the output directory
 '''
-LEFT_GRIPPER = 9
-RIGHT_GRIPPER = 19
+LEFT_GRIPPER = 6
+RIGHT_GRIPPER = 13 
 FPS = 30
-REPO_NAME = "Flatten_Shirt_ROT6D_0312"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "Fold_Shirt_0312"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -60,19 +60,17 @@ EEF_MAPPING = {
 }
 
 dataset_paths = [
-                "/mnt/pfs-chihiro/20250306",
-                "/mnt/pfs-chihiro/20250307"
+                "/mnt/pfs-chihiro/20250311",
+                "/mnt/pfs-chihiro/20250310"
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
-    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'FULL_HF' in p and ("20250306_Y_AL03_DYF03_PI0STEP01FULL_HF_GZQ" not in p and "20250306_Y_AL01_DYF03_PI0STEP01FULL_HF_LJ" not in p)]
-
-import ipdb; ipdb.set_trace()
+    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'QUICK_HF' in p]
 
 DATASET_TASK = {}
 # '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL02_DYF03_PI0STEP01FINE_CXJ_ai_hdf5':'Flatten the shirt',
 for p in dataset_files:
-    DATASET_TASK[p] = 'Flatten the shirt' if 'QUICK' not in p else 'Fold the shirt'
+    DATASET_TASK[p] = 'Flatten the shirt' if 'QUICK_HF' not in p else 'Fold the shirt'
 
 
 def normalize(vec, eps=1e-12):
@@ -163,12 +161,12 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
                 },
                 "observation.state": {
                     "dtype": "float32",
-                    "shape": (20,),
+                    "shape": (14,),
                     "names": ["state"],
                 },
                 "actions": {
                     "dtype": "float32",
-                    "shape": (20,),
+                    "shape": (14,),
                     "names": ["actions"],
                 },
             },
@@ -206,14 +204,10 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
                         v = []
                         for each_key in mapping[key]:
                             # print(each_key, ep[each_key].shape, type(ep[each_key]))
-                            if "axis_angle" in each_key:
-                                rot6d_data = transform_rotation(np.array(ep[each_key]), from_rep="axis_angle", to_rep="rotation_6d")
-                                v.append(torch.from_numpy(rot6d_data))
-                            else:
-                                try:
-                                    v.append(torch.from_numpy(np.array(ep[each_key])))
-                                except:
-                                    import ipdb; ipdb.set_trace()
+                            try:
+                                v.append(torch.from_numpy(np.array(ep[each_key])))
+                            except:
+                                import ipdb; ipdb.set_trace()
                         v = torch.cat(v, dim=1)
                         if mapping == JOINT_MAPPING:
                             v = v[..., 2:16]

@@ -147,11 +147,11 @@ def train_step(
         model: _model.BaseModel, rng: at.KeyArrayLike, observation: _model.Observation, actions: _model.Actions
     ):
         chunked_loss = model.compute_loss(rng, observation, actions, train=True)
-        # return jnp.mean(chunked_loss), jnp.mean(chunked_loss, axis=[0, 1])
-        action_space_loss = jnp.mean(chunked_loss, axis=[0, 1])
-        position_loss = (jnp.mean(action_space_loss[:3]) + jnp.mean(action_space_loss[7:10])) / 2.
-        rot_loss = (jnp.mean(action_space_loss[3:6]) + jnp.mean(action_space_loss[10:13])) / 2.
-        return jnp.mean(chunked_loss) + position_loss, jnp.mean(chunked_loss, axis=[0, 1]), position_loss, rot_loss
+        return jnp.mean(chunked_loss), jnp.mean(chunked_loss, axis=[0, 1])
+        # action_space_loss = jnp.mean(chunked_loss, axis=[0, 1])
+        # position_loss = (jnp.mean(action_space_loss[:3]) + jnp.mean(action_space_loss[7:10])) / 2.
+        # rot_loss = (jnp.mean(action_space_loss[3:6]) + jnp.mean(action_space_loss[10:13])) / 2.
+        # return jnp.mean(chunked_loss) + position_loss, (jnp.mean(chunked_loss, axis=[0, 1]), position_loss, rot_loss)
 
     train_rng = jax.random.fold_in(rng, state.step)
     observation, actions = batch
@@ -186,14 +186,25 @@ def train_step(
             lambda _, x: x.value.ndim > 1,
         ),
     )
+    # info = {
+    #     "loss": loss[0],
+    #     "loss_left_rot": jnp.mean(loss[1][0][:6]),
+    #     "loss_left_gripper": loss[1][0][6],
+    #     "loss_right_rot": jnp.mean(loss[1][0][7:13]),
+    #     "loss_right_gripper": loss[1][0][13],
+    #     "loss_position": loss[1][1],
+    #     "loss_rot": loss[1][2],
+    #     "grad_norm": optax.global_norm(grads),
+    #     "param_norm": optax.global_norm(kernel_params),
+    # }
     info = {
         "loss": loss[0],
-        "loss_left_rot": jnp.mean(loss[1][:6]),
-        "loss_left_gripper": loss[1][6],
-        "loss_right_rot": jnp.mean(loss[1][7:13]),
-        "loss_right_gripper": loss[1][13],
-        "loss_position": loss[2],
-        "loss_rot": loss[3],
+        "loss_left_rot": jnp.mean(loss[1][:9]),
+        "loss_left_gripper": loss[1][9],
+        "loss_right_rot": jnp.mean(loss[1][10:19]),
+        "loss_right_gripper": loss[1][19],
+        "loss_position": jnp.mean(loss[1][:3]),
+        "loss_rot": jnp.mean(loss[1][10:13]),
         "grad_norm": optax.global_norm(grads),
         "param_norm": optax.global_norm(kernel_params),
     }
