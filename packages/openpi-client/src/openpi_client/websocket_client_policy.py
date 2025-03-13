@@ -37,8 +37,15 @@ class WebsocketClientPolicy(_base_policy.BasePolicy):
     @override
     def infer(self, obs: Dict) -> Dict:  # noqa: UP006
         data = self._packer.pack(obs)
-        self._ws.send(data)
-        response = self._ws.recv()
+        # self._ws.send(data)
+        # response = self._ws.recv()
+        while True:
+             try:
+                 self._ws.send(data)
+                 response = self._ws.recv()
+                 break
+             except websockets.exceptions.ConnectionClosed:
+                 self._ws, self._server_metadata = self._wait_for_server()
         if isinstance(response, str):
             # we're expecting bytes; if the server sends a string, it's an error.
             raise RuntimeError(f"Error in inference server:\n{response}")

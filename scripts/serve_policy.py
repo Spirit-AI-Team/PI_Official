@@ -25,6 +25,7 @@ class EnvMode(enum.Enum):
     SPI0_ARX_LoRA3 = 'spi0_arx_lora3'
     SPI0_ARX_LoRA_Multi = 'spi0_arx_lora_multi'
     SPI0_ARX_FULL = 'spi0_arx_multi'
+    SPI0_ARX_FULL2 = 'SPI0_ARX_FULL2'
 @dataclasses.dataclass
 class Checkpoint:
     """Load a policy from a trained checkpoint."""
@@ -76,7 +77,15 @@ DEFAULT_CHECKPOINT: dict[EnvMode, Checkpoint] = {
     ),
     EnvMode.SPI0_ARX_FULL: Checkpoint(
         config="spi0_aloha_eef_full",
-        dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
+        # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
+        # dir="checkpoints/spi0_aloha_eef_15quick_full_0312/25000",
+        dir="checkpoints/spi0_aloha_eef_full_0312/29999",
+    ),
+    EnvMode.SPI0_ARX_FULL2: Checkpoint(
+        config="spi0_aloha_eef_full2",
+        # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
+        dir="checkpoints/shirtflatten_EEF_06_07_news2/29999",
+        # dir='checkpoints/shirtflatten_EEF_06_11_3w_full/29999',
     ),
     EnvMode.SPI0_ARX_LoRA: Checkpoint(
         config="spi0_aloha_finetune_lora",

@@ -540,9 +540,50 @@ _CONFIGS = [
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_full",
                 asset_id="FlattenShirt_EEF_0306_07",
+                # asset_id="Fold_Shirt_0312",
             ),
             adapt_to_pi=False,
             default_prompt="fold the shirt",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+            ),
+        ),
+        batch_size=32,
+        num_workers=4,
+        fsdp_devices=2,
+        weight_loader=weight_loaders.CheckpointWeightLoader("checkpoints/shirtflatten_0225_base0223/29999/params"),
+        num_train_steps=30_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
+    ),
+    TrainConfig(
+        name="spi0_aloha_eef_full2",
+        model=pi0.Pi0Config(action_horizon=60),
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id="FlattenShirt_EEF_0306_07",
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_eef_full",
+                # asset_id="FlattenShirt_EEF_0306_07",
+                asset_id="FlattenShirt_EEF_0306_07",
+            ),
+            adapt_to_pi=False,
+            # default_prompt="fold the shirt",
             repack_transforms=_transforms.Group(
                 inputs=[
                     _transforms.RepackTransform(
