@@ -38,8 +38,8 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 '''
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
-FPS = 10
-REPO_NAME = "Shirt_Half_EEF_0306_11"  # Name of the output dataset, also used for the Hugging Face Hub
+FPS = 30
+REPO_NAME = "FlattenShirt_EEF_Gripper_0318_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -58,6 +58,14 @@ EEF_MAPPING_CMD = {
     "actions":['robot0_cmd_eef_pos', 'robot0_cmd_eef_rot_axis_angle', 'robot0_gripper_width', 'robot1_cmd_eef_pos', 'robot1_cmd_eef_rot_axis_angle', 'robot1_gripper_width'],
 }
 
+EEF_MAPPING_CMD_GRIPPER = {
+    "observation.images.cam_high": 'camera0_rgb', 
+    "observation.images.cam_left_wrist": 'camera1_rgb', 
+    "observation.images.cam_right_wrist": 'camera2_rgb',
+    "observation.state":['robot0_eef_pos', 'robot0_eef_rot_axis_angle', 'robot0_gripper_width', 'robot1_eef_pos', 'robot1_eef_rot_axis_angle', 'robot1_gripper_width'],
+    "actions":['robot0_cmd_eef_pos', 'robot0_cmd_eef_rot_axis_angle', 'robot0_gripper_cmd_width', 'robot1_cmd_eef_pos', 'robot1_cmd_eef_rot_axis_angle', 'robot1_gripper_cmd_width'],
+}
+
 EEF_MAPPING = {
     "observation.images.cam_high": 'camera0_rgb', 
     "observation.images.cam_left_wrist": 'camera1_rgb', 
@@ -67,32 +75,42 @@ EEF_MAPPING = {
 }
 
 dataset_paths = [
-                    # '/root/PI_Official/data/hdf5/0_1foldshirt',
-                    # '/root/PI_Official/data/hdf5/0_1new_0225',
-                    # '/root/PI_Official/data/hdf5/0_1new_0226',
-                    # '/root/PI_Official/data/hdf5/0_1new_0227',
-                    # '/root/PI_Official/data/hdf5/0_1slow_0304',
-                    # '/pfstem/wenxuan/resources/hdf5/15steps_quick',
-                    # '/pfstem/wenxuan/resources/hdf5/9steps_quick',
-                    '/mnt/pfs-chihiro/20250306',
-                    '/mnt/pfs-chihiro/20250307',
-                    '/mnt/pfs-chihiro/20250310'
+                    # '/mnt/pfs-chihiro/20250306',
+                    # '/mnt/pfs-chihiro/20250307',
+                    # '/mnt/pfs-chihiro/20250308',
+                    # '/mnt/pfs-chihiro/20250310',
+                    # '/mnt/pfs-chihiro/20250311',
+                    # '/mnt/pfs-chihiro/20250312',
+                    # '/mnt/pfs-chihiro/20250313',
+                    # '/mnt/pfs-chihiro/20250314',
+                    # '/mnt/pfs-chihiro/20250315',
+                    '/mnt/pfs-chihiro/20250317',
+                    '/mnt/pfs-chihiro/20250318',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
-    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'FULL_HF' in p]
+    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'HF' in p]
 
 DATASET_TASK = {}
 # '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL02_DYF03_PI0STEP01FINE_CXJ_ai_hdf5':'Flatten the shirt',
 for p in dataset_files:
-    DATASET_TASK[p] = 'Flatten the shirt' if 'QUICK' not in p else 'Fold the shirt'
+    # if 'PI0STEP01AUG' in p:
+    #     DATASET_TASK[p] = 'Flatten the shirt'
+    # if 'PI0STACK_HF' in p:
+    #     DATASET_TASK[p] = 'Fold up again and stack the shirt to the corner'
+    if '01FULL_HF' in p and 'WW' not in p:
+        DATASET_TASK[p] = 'Flatten the shirt'
+    # elif '15QUICK_HF' in p:
+    #      DATASET_TASK[p] = 'Fold the shirt'
+    else:
+        pass
 
 
 # ipdb.set_trace()
 def main(data_dir: str = '', *, 
          push_to_hub: bool = False, 
          create_from_scratch: bool = True,
-         mapping:dict = EEF_MAPPING,
+         mapping:dict = EEF_MAPPING_CMD_GRIPPER,
          ):
     # Clean up any existing dataset in the output directory
     if create_from_scratch:
@@ -141,6 +159,7 @@ def main(data_dir: str = '', *,
         )
     else:
         dataset = LeRobotDataset(repo_id=REPO_NAME, local_files_only=True)
+        dataset.start_image_writer(num_threads=40, num_processes=10)
 
     # Loop over raw Libero datasets and write episodes to the LeRobot dataset
     # You can modify this for your own data format
@@ -154,8 +173,10 @@ def main(data_dir: str = '', *,
     #   6        1       6         1
     #   l_joints l_grip  r_joints  r_grip
 
+
     for raw_dataset_name, task_instruction in DATASET_TASK.items():
-        # raw_dataset_name, task_instruction = pair    
+        # raw_dataset_name, task_instruction = pair  
+        # try:
         hdf5s_path = os.path.join(data_dir, raw_dataset_name)
         hdf5_file_names = os.listdir(hdf5s_path)
         hdf5_file_names.sort()
@@ -189,8 +210,17 @@ def main(data_dir: str = '', *,
                 normed_value = gripper - min_value
                 normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6) 
                 value_dict['observation.state'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1] = normed_value * 5.
-                ##################
-                value_dict['action'] = value_dict['observation.state']
+
+                gripper = value_dict['actions'][..., LEFT_GRIPPER:LEFT_GRIPPER+1]
+                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
+                normed_value = gripper - min_value
+                normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6)
+                value_dict['actions'][..., LEFT_GRIPPER:LEFT_GRIPPER+1] = normed_value * 5.
+                gripper = value_dict['actions'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1]
+                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
+                normed_value = gripper - min_value
+                normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6) 
+                value_dict['actions'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1] = normed_value * 5.
 
                 len_traj = value_dict["observation.state"].shape[0]
                 for i in range(len_traj):
@@ -204,10 +234,14 @@ def main(data_dir: str = '', *,
                         }
                     )
                 dataset.save_episode(task=task_instruction)
+        # except Exception as e:
+        #     log = open('/root/PI_Official/data/error.txt', 'w')  
+        #     log.write(f'{raw_dataset_name} does not have cmd eef\n')
+        #     log.close()
+        #     continue
 
     # Consolidate the dataset, skip computing stats since we will do that later
     dataset.consolidate(run_compute_stats=False, keep_image_files = False)
-
     # Optionally push to the Hugging Face Hub
     if push_to_hub:
         dataset.push_to_hub(

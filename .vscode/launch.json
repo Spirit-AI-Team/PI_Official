@@ -41,7 +41,7 @@
             "program": "${workspaceFolder}/scripts/train.py",
             "args": [
                 // "pi0_libero_simple_test",
-                "spi0_aloha_eef_full",
+                "spi0_aloha_finetune_lora",
                 "--exp-name=test_full", 
                 "--no-wandb-enabled",
                 "--overwrite",

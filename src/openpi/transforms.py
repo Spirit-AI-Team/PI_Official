@@ -201,6 +201,7 @@ class DeltaActions(DataTransformFn):
     # can be smaller than the actual number of dimensions. If None, this transform is a no-op.
     # See `make_bool_mask` for more details.
     mask: Sequence[bool] | None
+    delta_base: str 
 
     def __call__(self, data: DataDict) -> DataDict:
         if "actions" not in data or self.mask is None:
@@ -209,7 +210,12 @@ class DeltaActions(DataTransformFn):
         state, actions = data["state"], data["actions"]
         mask = np.asarray(self.mask)
         dims = mask.shape[-1]
-        actions[..., :dims] -= np.expand_dims(np.where(mask, state[..., :dims], 0), axis=-2)
+        if self.delta_base == 'state':
+            actions[..., :dims] -= np.expand_dims(np.where(mask, state[..., :dims], 0), axis=-2)
+        elif self.delta_base == 'actions':
+            actions[..., :dims] -= np.expand_dims(np.where(mask, actions[..., 0, :dims], 0), axis=-2)
+        else:
+            raise Exception('Invalid delta base!')
         data["actions"] = actions
 
         return data
@@ -223,6 +229,7 @@ class AbsoluteActions(DataTransformFn):
     # can be smaller than the actual number of dimensions. If None, this transform is a no-op.
     # See `make_bool_mask` for more details.
     mask: Sequence[bool] | None
+    delta_base: str
 
     def __call__(self, data: DataDict) -> DataDict:
         if "actions" not in data or self.mask is None:
@@ -231,7 +238,12 @@ class AbsoluteActions(DataTransformFn):
         state, actions = data["state"], data["actions"]
         mask = np.asarray(self.mask)
         dims = mask.shape[-1]
-        actions[..., :dims] += np.expand_dims(np.where(mask, state[..., :dims], 0), axis=-2)
+        if self.delta_base == 'state':
+            actions[..., :dims] += np.expand_dims(np.where(mask, state[..., :dims], 0), axis=-2)
+        elif self.delta_base == 'actions':
+            actions[..., :dims] += p.expand_dims(np.where(mask, actions[..., 0, :dims], 0), axis=-2)
+        else:
+            raise Exception('Invalid delta base!')
         data["actions"] = actions
 
         return data

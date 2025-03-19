@@ -100,7 +100,10 @@ def init_train_state(
 
         params = nnx.state(model)
         # Convert frozen params to bfloat16.
-        params = nnx_utils.state_map(params, config.freeze_filter, lambda p: p.replace(p.value.astype(jnp.bfloat16)))
+        if config.freeze_dtype == 'bf16':
+            params = nnx_utils.state_map(params, config.freeze_filter, lambda p: p.replace(p.value.astype(jnp.bfloat16)))
+        else:
+            params = nnx_utils.state_map(params, config.freeze_filter, lambda p: p)
 
         return training_utils.TrainState(
             step=0,

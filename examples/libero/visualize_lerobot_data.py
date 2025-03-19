@@ -12,7 +12,7 @@ import ffmpeg
 from pathlib import Path
 
 # set the LEROBOT_HOME and REPO_NAME to the dataset you need.
-REPO_NAME = "FlattenShirt_EEF_0306_11"
+REPO_NAME = "FlattenShirt_EEF_0306_11_fix"
 
 def vidwrite(filename, images, framerate=10, vcodec='libx264'):
     """
@@ -70,7 +70,7 @@ def main(num_episodes_to_visualize=20, episodes_idx_to_visualize = None):
     # set the LEROBOT_HOME and REPO_NAME to the dataset you need.
     # LEROBOT_HOME = Path('/pfstem/wenxuan/resources/lerobot_15steps')
     dataset = LeRobotDataset(root=LEROBOT_HOME / REPO_NAME, repo_id=REPO_NAME, local_files_only=True)
-    fps = 30#dataset.fps
+    fps = dataset.fps
     num_episodes = dataset.num_episodes
 
     # visualize config
@@ -86,6 +86,7 @@ def main(num_episodes_to_visualize=20, episodes_idx_to_visualize = None):
         total_number_of_frames = ep_end - ep_start + 1
         full_images = []
         actions = np.empty((0, 14))
+        # states = np.empty((0, 14))
         for data_idx in range(ep_start, ep_end):
             value_dict = dataset[data_idx]
             actions = np.concatenate((actions, value_dict['actions'][None,...].numpy()), axis=0)

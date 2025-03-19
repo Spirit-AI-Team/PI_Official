@@ -208,6 +208,7 @@ class LeRobotAlohaDataConfig(DataConfigFactory):
     # use standard Aloha data should set this to true.
     adapt_to_pi: bool = True
     interp_rate: int = 1
+    delta_base: str = 'state'
     # Repack transforms.
     repack_transforms: tyro.conf.Suppress[_transforms.Group] = dataclasses.field(
         default=_transforms.Group(
@@ -234,8 +235,8 @@ class LeRobotAlohaDataConfig(DataConfigFactory):
         if self.use_delta_joint_actions:
             delta_action_mask = _transforms.make_bool_mask(6, -1, 6, -1)
             data_transforms = data_transforms.push(
-                inputs=[_transforms.DeltaActions(delta_action_mask)],
-                outputs=[_transforms.AbsoluteActions(delta_action_mask)],
+                inputs=[_transforms.DeltaActions(mask=delta_action_mask, delta_base=self.delta_base)],
+                outputs=[_transforms.AbsoluteActions(mask=delta_action_mask, delta_base=self.delta_base)],
             )
 
         model_transforms = ModelTransformFactory(default_prompt=self.default_prompt)(model_config)
@@ -357,6 +358,7 @@ class TrainConfig:
     # eg. if total device is 4 and fsdp devices is 2; then the model will shard to 2 devices and run
     # data parallel between 2 groups of devices.
     fsdp_devices: int = 1
+    freeze_dtype: str = "bf16"
 
     @property
     def assets_dirs(self) -> pathlib.Path:
@@ -452,43 +454,6 @@ _CONFIGS = [
                 prompt_from_task=True,
             ),
         ),
-        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
-        num_train_steps=30_000,
-    ),
-    TrainConfig(
-        name="spi0_aloha_finetune_full_noada",
-        model=pi0.Pi0Config(),
-        exp_name = 'test',
-        data=LeRobotAlohaDataConfig(
-            repo_id="lky/Dieyifufix_1_3_0218",
-            assets=AssetsConfig(
-                assets_dir="/hy-tmp/likaiyu/PI_Official/assets/spi0_aloha_finetune_full",
-                asset_id="lky/Dieyifufix_1_3_0218",
-            ),
-            adapt_to_pi=False,
-            default_prompt="fold the shirt",
-            repack_transforms=_transforms.Group(
-                inputs=[
-                    _transforms.RepackTransform(
-                        {
-                            "images": {
-                                "cam_high": "observation.images.cam_high",
-                                "cam_left_wrist": "observation.images.cam_left_wrist",
-                                "cam_right_wrist": "observation.images.cam_right_wrist",
-                            },
-                            "state": "observation.state",
-                            "actions": "actions",
-                        }
-                    )
-                ]
-            ),
-            base_config=DataConfig(
-                local_files_only=True,  # Set to True for local-only datasets.
-            ),
-        ),
-        batch_size=32,
-        num_workers=4,
-        fsdp_devices=2,
         weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
         num_train_steps=30_000,
     ),
@@ -619,14 +584,14 @@ _CONFIGS = [
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(
-        name="spi0_aloha_eef_lora1",
+        name="spi0_aloha_eef_lora",
         model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora", action_horizon=60),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="FlattenShirt_EEF_0306_07",
+            repo_id="FlattenShirt_EEF_0306",
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_full",
-                asset_id="FlattenShirt_EEF_0306_07",
+                asset_id="FlattenShirt_EEF_0306",
             ),
             adapt_to_pi=False,
             repack_transforms=_transforms.Group(
@@ -662,14 +627,14 @@ _CONFIGS = [
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(
-        name="spi0_aloha_eef_full",
+        name="spi0_aloha_eef_vlm_freeze",
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="FlattenShirt_EEF_0306_11",
+            repo_id="FlattenShirt_EEF_0314_15",
             assets=AssetsConfig(
-                assets_dir="assets/spi0_aloha_eef_full",
-                asset_id="FlattenShirt_EEF_0306_11",
+                assets_dir="assets/spi0_aloha_eef_vlm_freeze",
+                asset_id="FlattenShirt_EEF_0314_15",
             ),
             adapt_to_pi=False,
             # interp_rate=3,
@@ -698,20 +663,24 @@ _CONFIGS = [
         batch_size=32,
         num_workers=4,
         fsdp_devices=2,
-        weight_loader=weight_loaders.CheckpointWeightLoader("/root/PI_Official/data/checkpoints/spi0_aloha_eef_pretrain/shirtflatten_EEF_S2_pretrain_interp3/9999/params"),
+        freeze_dtype='bf32',
+        weight_loader=weight_loaders.CheckpointWeightLoader("/root/PI_Official/data/checkpoints/spi0_aloha_eef_pretrain/shirt_EEF_pretrains2_0316/9999/params"),
         num_train_steps=30_000,
+        freeze_filter=pi0.Pi0Config(
+            paligemma_variant="gemma_2b_freeze",
+        ).get_freeze_filter(),
         lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(
-        name="spi0_aloha_eef_full2",
+        name="spi0_aloha_eef_vlm_freeze2",
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="FlattenShirt_EEF_0306_11",
+            repo_id="FlattenShirt_EEF_0306_11_fix",
             assets=AssetsConfig(
-                assets_dir="assets/spi0_aloha_eef_full2",
-                asset_id="FlattenShirt_EEF_0306_11",
+                assets_dir="assets/spi0_aloha_eef_vlm_freeze2",
+                asset_id="FlattenShirt_EEF_0306_11_fix",
             ),
             adapt_to_pi=False,
             # interp_rate=3,
@@ -738,11 +707,182 @@ _CONFIGS = [
             ),
         ),
         batch_size=32,
-        num_workers=12,
+        num_workers=8,
         fsdp_devices=4,
-        weight_loader=weight_loaders.CheckpointWeightLoader("/root/PI_Official/data/checkpoints/spi0_aloha_eef_pretrain/shirtflatten_EEF_S2_pretrain_interp3/9999/params"),
+        freeze_dtype='bf32',
+        weight_loader=weight_loaders.CheckpointWeightLoader("/root/PI_Official/data/checkpoints/spi0_aloha_eef_pretrain/shirt_EEF_pretrains2_0316/9999/params"),
         num_train_steps=60_000,
+        freeze_filter=pi0.Pi0Config(
+            paligemma_variant="gemma_2b_freeze",
+        ).get_freeze_filter(),
         lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=60_000),
+        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
+    ),
+    TrainConfig(
+        name="spi0_aloha_eef_full",
+        model=pi0.Pi0Config(action_horizon=60),
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id="FlattenShirt_EEF_WW_0318",
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_eef_full",
+                asset_id="FlattenShirt_EEF_WW_0318",
+            ),
+            adapt_to_pi=False,
+            # interp_rate=3,
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            "prompt": "prompt",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        batch_size=32,
+        num_workers=4,
+        fsdp_devices=2,
+        weight_loader=weight_loaders.CheckpointWeightLoader("/root/PI_Official/data/checkpoints/spi0_aloha_eef_pretrain/shirt_EEF_pretrains2_0316/9999/params"),
+        num_train_steps=30_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
+    ),
+    TrainConfig(
+        name="spi0_aloha_eef_full2",
+        model=pi0.Pi0Config(action_horizon=60),
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id="FlattenShirt_EEF_LTJ_0318",
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_eef_full2",
+                asset_id="FlattenShirt_EEF_LTJ_0318",
+            ),
+            adapt_to_pi=False,
+            # delta_base='actions',
+            # interp_rate=3,
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            "prompt": "prompt",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        batch_size=32,
+        num_workers=4,
+        fsdp_devices=2,
+        weight_loader=weight_loaders.CheckpointWeightLoader("/root/PI_Official/data/checkpoints/spi0_aloha_eef_pretrain/shirt_EEF_pretrains2_0316/9999/params"),
+        num_train_steps=20_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=20_000),
+        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
+    ),
+    TrainConfig(
+        name="spi0_aloha_eef_full3",
+        model=pi0.Pi0Config(action_horizon=60),
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id="FlattenShirt_EEF_0306_11_fix",
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_eef_full3",
+                asset_id="FlattenShirt_EEF_0306_11_fix",
+            ),
+            adapt_to_pi=False,
+            # delta_base='actions',
+            # interp_rate=3,
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            "prompt": "prompt",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        batch_size=32,
+        num_workers=4,
+        fsdp_devices=2,
+        weight_loader=weight_loaders.CheckpointWeightLoader("/root/PI_Official/data/checkpoints/spi0_aloha_eef_pretrain/shirt_EEF_pretrains2_0316/9999/params"),
+        num_train_steps=30_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
+    ),
+    TrainConfig(
+        name="spi0_aloha_eef_full4",
+        model=pi0.Pi0Config(action_horizon=60),
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id="FlattenShirt_EEF_WHJ_0318",
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_eef_full4",
+                asset_id="FlattenShirt_EEF_WHJ_0318",
+            ),
+            adapt_to_pi=False,
+            # delta_base='actions',
+            # interp_rate=3,
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            "prompt": "prompt",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        batch_size=32,
+        num_workers=4,
+        fsdp_devices=2,
+        weight_loader=weight_loaders.CheckpointWeightLoader("/root/PI_Official/data/checkpoints/spi0_aloha_eef_pretrain/shirt_EEF_pretrains2_0316/9999/params"),
+        num_train_steps=20_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=20_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(
@@ -750,13 +890,13 @@ _CONFIGS = [
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="Shirt_Half_EEF_0310",
+            repo_id="AllShirt_EEF_0316",
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_pretrain",
-                asset_id="Shirt_Half_EEF_0310",
+                asset_id="AllShirt_EEF_0316",
             ),
             adapt_to_pi=False,
-            interp_rate=3,
+            # interp_rate=3,
             # default_prompt="fold the shirt",
             repack_transforms=_transforms.Group(
                 inputs=[
@@ -780,50 +920,8 @@ _CONFIGS = [
             ),
         ),
         batch_size=256,
-        num_workers=12,
-        fsdp_devices=4,
-        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
-        num_train_steps=10_000,
-        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=120_000),
-        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
-    ),
-    TrainConfig(
-        name="spi0_aloha_eef_pretrain2",
-        model=pi0.Pi0Config(action_horizon=60),
-        exp_name = 'test',
-        data=LeRobotAlohaDataConfig(
-            repo_id="Shirt_Half_EEF_0310",
-            assets=AssetsConfig(
-                assets_dir="assets/spi0_aloha_eef_pretrain2",
-                asset_id="Shirt_Half_EEF_0310",
-            ),
-            adapt_to_pi=False,
-            interp_rate=1,
-            # default_prompt="fold the shirt",
-            repack_transforms=_transforms.Group(
-                inputs=[
-                    _transforms.RepackTransform(
-                        {
-                            "images": {
-                                "cam_high": "observation.images.cam_high",
-                                "cam_left_wrist": "observation.images.cam_left_wrist",
-                                "cam_right_wrist": "observation.images.cam_right_wrist",
-                            },
-                            "state": "observation.state",
-                            "actions": "actions",
-                            "prompt": "prompt",
-                        }
-                    )
-                ]
-            ),
-            base_config=DataConfig(
-                local_files_only=True,  # Set to True for local-only datasets.
-                prompt_from_task=True,
-            ),
-        ),
-        batch_size=256,
-        num_workers=12,
-        fsdp_devices=4,
+        num_workers=16,
+        fsdp_devices=8,
         weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
         num_train_steps=10_000,
         lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=120_000),

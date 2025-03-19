@@ -112,26 +112,26 @@ class Pi0Config(_model.BaseModelConfig):
     def get_freeze_filter(self) -> nnx.filterlib.Filter:
         """Returns the freeze filter based on the model config."""
         filters = []
-        has_lora = False
+        # has_lora = False
         gemma_params_filter = nnx_utils.PathRegex(".*llm.*")
-        action_expert_params_filter = nnx_utils.PathRegex(".*llm.*_1.*")
-        if "lora" in self.paligemma_variant:
+        action_expert_params_filter = nnx_utils.PathRegex(".*llm.*_1.*")#action expert被包含在gemma内
+        if "lora" in self.paligemma_variant or "freeze" in self.paligemma_variant:
             filters.append(
                 gemma_params_filter,
             )
-            if "lora" not in self.action_expert_variant:
+            if "lora" not in self.action_expert_variant or "freeze" not in self.action_expert_variant:
                 # If only freeze gemma params, exclude action expert params.
                 filters.append(
                     nnx.Not(action_expert_params_filter),
                 )
-            has_lora = True
-        elif "lora" in self.action_expert_variant:
+            # has_lora = True
+        elif "lora" in self.action_expert_variant or "freeze" in self.action_expert_variant:
             filters.append(
                 action_expert_params_filter,
             )
-            has_lora = True
+            # has_lora = True
 
-        if has_lora:
+        if "lora" in self.paligemma_variant or "lora" in self.action_expert_variant:
             # If any lora is used, exclude all lora params.
             filters.append(
                 nnx.Not(nnx_utils.PathRegex(".*lora.*")),
