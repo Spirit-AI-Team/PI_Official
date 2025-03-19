@@ -26,6 +26,8 @@ class EnvMode(enum.Enum):
     SPI0_ARX_LoRA_Multi = 'spi0_arx_lora_multi'
     SPI0_ARX_FULL = 'spi0_arx_multi'
     SPI0_ARX_FULL2 = 'SPI0_ARX_FULL2'
+    SPI0_ARX_FULL3 = 'SPI0_ARX_FULL3'
+    SPI0_ARX_FULL4 = 'SPI0_ARX_FULL4'
 @dataclasses.dataclass
 class Checkpoint:
     """Load a policy from a trained checkpoint."""
@@ -72,28 +74,38 @@ DEFAULT_CHECKPOINT: dict[EnvMode, Checkpoint] = {
         dir="s3://openpi-assets/checkpoints/pi0_aloha_towel",
     ),
     EnvMode.SPI0_ARX: Checkpoint(
-        config="spi0_aloha_finetune_full",
-        dir="checkpoints/shirtflatten_0225_27_bases2_full/29999",
+        config="spi0_aloha_eef_full",
+        # dir="checkpoints/shirtflatten_0225_27_bases2_full/29999",
+        dir="checkpoints/FlattenShirt_EEF_0306_07_s2eef/29999",
     ),
     EnvMode.SPI0_ARX_FULL: Checkpoint(
         config="spi0_aloha_eef_full",
         # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
         # dir="checkpoints/spi0_aloha_eef_15quick_full_0312/25000",
-        dir="checkpoints/spi0_aloha_eef_full_0312/29999",
+        dir="checkpoints/FlattenShirt_EEF_0306_15_LTJ/19999",
     ),
     EnvMode.SPI0_ARX_FULL2: Checkpoint(
         config="spi0_aloha_eef_full2",
         # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
-        dir="checkpoints/shirtflatten_EEF_06_07_news2/29999",
-        # dir='checkpoints/shirtflatten_EEF_06_11_3w_full/29999',
+        dir="checkpoints/FlattenShirt_EEF_0306_15_WHJ/19999",
+    ),
+    EnvMode.SPI0_ARX_FULL3: Checkpoint(
+        config="spi0_aloha_eef_full3",
+        # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
+        dir="checkpoints/FlattenShirt_EEF_0306_15_WW/29999",
+    ),
+    EnvMode.SPI0_ARX_FULL4: Checkpoint(
+        config="spi0_aloha_eef_full4",
+        # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
+        dir="checkpoints/FlattenShirt_EEF_0306_11_full/29999",
     ),
     EnvMode.SPI0_ARX_LoRA: Checkpoint(
-        config="spi0_aloha_finetune_lora",
-        dir="checkpoints/shirtflatten_0225_27_bases2_lora/29999",
+        config="spi0_aloha_eef_lora",
+        dir="checkpoints/shirtflatten_EEF_06_07_lora/29999",
     ),
     EnvMode.SPI0_ARX_LoRA2: Checkpoint(
-        config="spi0_aloha_finetune_lora2",
-        dir="checkpoints/shirtfold_6step_bases2_lora/59999",
+        config="spi0_aloha_eef_lora",
+        dir="checkpoints/shirtflatten_EEF_06_07_pi0base_lora/29999",
     ),
     EnvMode.SPI0_ARX_LoRA3: Checkpoint(
         config="spi0_aloha_eef_lora",
