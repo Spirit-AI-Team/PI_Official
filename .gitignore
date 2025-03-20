@@ -4,6 +4,7 @@ checkpoints/
 data/
 demo/
 wandb/
+policy_records/
 *.png
 
 # Byte-compiled / optimized / DLL files

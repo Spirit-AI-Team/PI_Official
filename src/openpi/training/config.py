@@ -536,10 +536,10 @@ _CONFIGS = [
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="FlattenShirt_EEF_0306_07",
+            repo_id="AllShirt_GripperEEF_0315_19",
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_full",
-                asset_id="FlattenShirt_EEF_0306_07",
+                asset_id="AllShirt_GripperEEF_0315_19",
                 # asset_id="Fold_Shirt_0312",
             ),
             adapt_to_pi=False,
@@ -616,11 +616,11 @@ _CONFIGS = [
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="FlattenShirt_EEF_WW_0318",
+            repo_id="AllShirt_EEF_0316",
             assets=AssetsConfig(
-                assets_dir="assets/spi0_aloha_eef_full",
+                assets_dir="assets/spi0_aloha_eef_full3",
                 # asset_id="FlattenShirt_EEF_0306_07",
-                asset_id="FlattenShirt_EEF_WW_0318",
+                asset_id="AllShirt_EEF_0316",
             ),
             adapt_to_pi=False,
             # default_prompt="fold the shirt",

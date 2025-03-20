@@ -5,4 +5,4 @@ python scripts/serve_policy.py --env SPI0_ARX_FULL2 --default_prompt='Flatten th
 
 
 # python examples/arx_r5_real_teleop/main.py
-# python scripts/serve_policy.py --env SPI0_ARX --default_prompt='Flatten the shirt'
+# python scripts/serve_policy.py --env SPI0_ARX_FULL3 --default_prompt='Flatten the shirt'

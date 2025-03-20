@@ -72,61 +72,7 @@ class ActionChunkBroker(_base_policy.BasePolicy):
 
         for i in range(act_dim): 
             new_actions[i] = np.interp(np.linspace(0, 1, self._frequency), np.linspace(0,1,self._action_horizon), actions.T[i])
-            # if i == 6 or i==13:
-            #     new_actions[i] -= 1
+            if i == 6 or i==13:
+                new_actions[i][new_actions[i] <= 1] = 0
         new_results = {'actions':new_actions.T}
-        return new_results
-    
-class ActionChunkBroker2(_base_policy.BasePolicy):
-    """Wraps a policy to return action chunks one-at-a-time.
-
-    Assumes that the first dimension of all action fields is the chunk size.
-
-    A new inference call to the inner policy is only made when the current
-    list of chunks is exhausted.
-    """
-
-    def __init__(self, policy: _base_policy.BasePolicy, action_horizon: int, frequency: int):
-        self._policy = policy
-
-        self._action_horizon = action_horizon
-        self._frequency = frequency
-        self._cur_step: int = 0
-
-        self._last_results: Dict[str, np.ndarray] | None = None
-        self.time_counter = 0
-        self.time_step = 0
-
-    @override
-    def infer(self, obs: Dict) -> Dict:  # noqa: UP006
-
-
-        self._last_results = self._policy.infer(obs)
-        # pdb.set_trace()
-        self._last_results = self.postprocess(self._last_results)
-        results = self._last_results
-        # results = tree.map_structure(lambda x: x[self._cur_step, ...], self._last_results)
-
-
-        return results
-
-    @override
-    def reset(self) -> None:
-        self._policy.reset()
-        self._last_results = None
-        self._cur_step = 0
-
-    def postprocess(self, raw_results) -> dict:
-
-        raw_actions = raw_results['actions']
-        actions = raw_actions[:self._action_horizon, ...]
-        _, act_dim = actions.shape # ah, 14
-        new_actions = np.zeros((act_dim, self._frequency))#14, freq
-
-        for i in range(act_dim): 
-            new_actions[i] = np.interp(np.linspace(0, 1, self._frequency), np.linspace(0,1,self._action_horizon), actions.T[i])
-            if i == 6 or i == 13:
-                new_actions[i] -= 1
-        # arrow_actions = pa.array(new_actions.T)
-        new_results = {'actions': new_actions.T}
         return new_results

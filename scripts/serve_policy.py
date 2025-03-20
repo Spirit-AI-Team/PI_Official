@@ -82,7 +82,7 @@ DEFAULT_CHECKPOINT: dict[EnvMode, Checkpoint] = {
         config="spi0_aloha_eef_full",
         # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
         # dir="checkpoints/spi0_aloha_eef_15quick_full_0312/25000",
-        dir="checkpoints/FlattenShirt_EEF_0306_15_LTJ/19999",
+        dir="checkpoints/AllShirt_GripperEEF_0315_19/29999",
     ),
     EnvMode.SPI0_ARX_FULL2: Checkpoint(
         config="spi0_aloha_eef_full2",
@@ -92,7 +92,7 @@ DEFAULT_CHECKPOINT: dict[EnvMode, Checkpoint] = {
     EnvMode.SPI0_ARX_FULL3: Checkpoint(
         config="spi0_aloha_eef_full3",
         # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
-        dir="checkpoints/FlattenShirt_EEF_0306_15_WW/29999",
+        dir="checkpoints/shirt_EEF_pretrains2_0316/9999",
     ),
     EnvMode.SPI0_ARX_FULL4: Checkpoint(
         config="spi0_aloha_eef_full4",
