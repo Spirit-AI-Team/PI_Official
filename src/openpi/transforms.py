@@ -107,6 +107,7 @@ class InjectDefaultPrompt(DataTransformFn):
 
     def __call__(self, data: DataDict) -> DataDict:
         if self.prompt is not None and "prompt" not in data:
+            # import pdb;pdb.set_trace()
             data["prompt"] = np.asarray(self.prompt)
         return data
 

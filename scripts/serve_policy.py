@@ -87,7 +87,7 @@ DEFAULT_CHECKPOINT: dict[EnvMode, Checkpoint] = {
     EnvMode.SPI0_ARX_FULL2: Checkpoint(
         config="spi0_aloha_eef_full2",
         # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
-        dir="checkpoints/FlattenShirt_EEF_0306_15_WHJ/19999",
+        dir="checkpoints/FlattenShirt_EEF_0306_11_debug/59999",
     ),
     EnvMode.SPI0_ARX_FULL3: Checkpoint(
         config="spi0_aloha_eef_full3",

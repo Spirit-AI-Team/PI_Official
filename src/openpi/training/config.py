@@ -576,11 +576,11 @@ _CONFIGS = [
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="FlattenShirt_EEF_WHJ_0318",
+            repo_id="FlattenShirt_EEF_0306_11",
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_full",
                 # asset_id="FlattenShirt_EEF_0306_07",
-                asset_id="FlattenShirt_EEF_WHJ_0318",
+                asset_id="FlattenShirt_EEF_0306_11",
             ),
             adapt_to_pi=False,
             # default_prompt="fold the shirt",
@@ -675,12 +675,14 @@ _CONFIGS = [
                             },
                             "state": "observation.state",
                             "actions": "actions",
+                            "prompt": "prompt",
                         }
                     )
                 ]
             ),
             base_config=DataConfig(
                 local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
             ),
         ),
         batch_size=32,
@@ -798,6 +800,7 @@ _CONFIGS = [
                             },
                             "state": "observation.state",
                             "actions": "actions",
+                            "prompt": "prompt",
                         }
                     )
                 ]

@@ -33,7 +33,7 @@ class ActionChunkBroker(_base_policy.BasePolicy):
 
     @override
     def infer(self, obs: Dict) -> Dict:  # noqa: UP006
-
+        
         if obs['fake_action']:
             fake_results = {'actions': np.array(ActionChunkBroker.default_action)}
             return fake_results
