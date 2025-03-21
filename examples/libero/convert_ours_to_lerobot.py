@@ -38,26 +38,33 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 '''
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
-REPO_NAME = "FlattenShirt25_01"  # Name of the output dataset, also used for the Hugging Face Hub
-#XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
+REPO_NAME = "20250312_MultiTask4"  # Name of the output dataset, also used for the Hugging Face Hub
+FPS = 30
+# os.system('export LEROBOT_HOME=/pfstem/lyc/dataset/lerobot')
+# os.system('export XDG_CACHE_HOME=/pfstem/lyc/.cache')
 
-dataset_paths = [
-                '/pfstem/likaiyu/resources/hdf5/0_1new',
-                '/pfstem/likaiyu/resources/hdf5/0_1new_0226',
-                '/pfstem/likaiyu/resources/hdf5/0_1new_0227',
-                '/pfstem/likaiyu/resources/hdf5/0_1new_0228',
-                '/pfstem/likaiyu/resources/hdf5/0_1new_0301',
+dataset_folders_hdf5 = [
+                "/mnt/pfs-chihiro/20250312/20250312_Y_AL08_KITCHEN01_PTL_LTJ",
+                "/mnt/pfs-chihiro/20250312/20250312_Y_AL04_MULTI_EGG1_GY",
+                "/mnt/pfs-chihiro/20250312/20250312_Y_AL05_MULTI_SORT_LYB",
+                "/mnt/pfs-chihiro/20250312/20250312_Y_AL03_DYF03_MULTI_DW1_WHJ",
+                "/mnt/pfs-chihiro/20250312/20250312_Y_AL03_DYF03_MULTI_DW2_WHJ"
                 ]
-dataset_files = []
-for dataset_path in dataset_paths:
-    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'tar.gz' not in p]
+dataset_prompts = ["Pick up the kitchen paper with the left hand and pass it to the right hand, then place the kitchen paper on the right side of the table.",
+                   "Pick up the egg from the green round plate and place it into the egg holder.",
+                   "Pick up the orange-red toy and place it into the rectangular box, pick up the blue toy and place it into the yellow cambered box.",
+                   "Stack the bowls on the table.",
+                   "Stack the bowls on the table.",]
+assert len(dataset_folders_hdf5) == len(dataset_prompts)
+# dataset_files = []
+# for dataset_path in dataset_folders_hdf5:
+#     dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'tar.gz' not in p]
 
 DATASET_TASK = {
-# '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL02_DYF03_PI0STEP01FINE_CXJ_ai_hdf5':'Flatten the shirt',
-    p:'Flatten the shirt' for p in dataset_files
+    p: dataset_prompts[ii] for ii, p in enumerate(dataset_folders_hdf5)
 }
 
-def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *, 
+def main(data_dir: str = '', *, 
          push_to_hub: bool = False, 
          create_from_scratch: bool = True,
          ):
@@ -75,7 +82,7 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
         dataset = LeRobotDataset.create(
             repo_id=REPO_NAME,
             robot_type="aloha",
-            fps=10,
+            fps=FPS,
             features={
                 "observation.images.cam_high": {
                     "dtype": "image",
@@ -145,19 +152,19 @@ def main(data_dir: str = '/pfstem/likaiyu/resources/hdf5', *,
                     else:
                         value_dict[key] = torch.from_numpy(np.array(ep[mapping[key]]))
 
-                ### norm gripper
-                gripper = value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1]
-                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
-                normed_value = gripper - min_value
-                normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6)
-                value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1] = normed_value * 5.
-                gripper = value_dict['observation.state'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1]
-                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
-                normed_value = gripper - min_value
-                normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6) 
-                value_dict['observation.state'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1] = normed_value * 5.
-                ##################
-                value_dict['action'] = value_dict['observation.state']
+                # ### norm gripper
+                # gripper = value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1]
+                # min_value = torch.min(gripper, dim=0, keepdim=True)[0]
+                # normed_value = gripper - min_value
+                # normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6)
+                # value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1] = normed_value * 5.
+                # gripper = value_dict['observation.state'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1]
+                # min_value = torch.min(gripper, dim=0, keepdim=True)[0]
+                # normed_value = gripper - min_value
+                # normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6) 
+                # value_dict['observation.state'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1] = normed_value * 5.
+                # ##################
+                # value_dict['action'] = value_dict['observation.state']
 
                 len_traj = value_dict["observation.state"].shape[0]
                 for i in range(len_traj):

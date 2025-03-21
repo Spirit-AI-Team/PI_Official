@@ -773,30 +773,146 @@ _CONFIGS = [
         num_train_steps=20_000,
     ),
     #
-    # Debugging configs.
+    # lyc configs
     #
     TrainConfig(
-        name="debug",
-        data=FakeDataConfig(),
-        batch_size=2,
-        model=pi0.Pi0Config(paligemma_variant="dummy", action_expert_variant="dummy"),
-        save_interval=100,
-        overwrite=True,
-        exp_name="debug",
-        num_train_steps=10,
-        wandb_enabled=False,
+        name="spi0_aloha_mix0+15_util0301_full",
+        model=pi0.Pi0Config(action_horizon=25),
+        sample_weights_cfg="/pfstem/lyc/dataset/data_sample_dyf_0307.json",
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id=["FlattenShirt25_01", "FoldTheShirt15StepsQuick", "FoldShirtQuick0227_9Step_CrinkleInitialState"],
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_mix0+15_util0301_full",
+                asset_id=["FlattenShirt25_01", "FlattenShirt25_01", "FlattenShirt25_01"],  # only use 1st dataset
+            ),
+            adapt_to_pi=True,
+            default_prompt="fold the shirt",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            # "prompt": "prompt",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=False,
+            ),
+        ),
+        batch_size=128,
+        num_workers=8,
+        fsdp_devices=4,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=80_000),
+        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_finetune_full/shirtflatten_0225_27_bases2_full/29999/params"),
+        num_train_steps=80_000,
+        save_interval=10_000,
+        log_interval=10,
+        checkpoint_base_dir="/pfstem/lyc/checkpoints",
     ),
     TrainConfig(
-        name="debug_restore",
-        data=FakeDataConfig(),
-        batch_size=2,
-        model=pi0.Pi0Config(paligemma_variant="dummy", action_expert_variant="dummy"),
-        weight_loader=weight_loaders.CheckpointWeightLoader("./checkpoints/debug/debug/9/params"),
-        overwrite=True,
-        exp_name="debug",
-        num_train_steps=10,
-        wandb_enabled=False,
+        name="spi0_aloha_mix0+15_pickData_util0301_full",
+        model=pi0.Pi0Config(action_horizon=25),
+        sample_weights_cfg="/pfstem/lyc/dataset/data_sample_dyf_0310.json",
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id=["foldShirt-0_0228-0301-GY-15quick_0222-9quickCrinkle_full", "FoldShirtQuick0227_9Step_CrinkleInitialState"],
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_mix0+15_pickData_util0301_full",
+                asset_id=["foldShirt-0_0228-0301-GY-15quick_0222-9quickCrinkle_full", "foldShirt-0_0228-0301-GY-15quick_0222-9quickCrinkle_full"],  # use last-stage norm data, just copy from assets/spi0_aloha_mix0+15_util0301_full/FlattenShirt25_01
+            ),
+            adapt_to_pi=True,
+            default_prompt="fold the shirt",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            # "prompt": "prompt",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=False,
+            ),
+        ),
+        batch_size=128,
+        num_workers=8,
+        fsdp_devices=4,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=20_000, 
+                                                     warmup_steps=0, 
+                                                     peak_lr=1.2e-5, 
+                                                     decay_lr=2.5e-6),
+        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/lyc/checkpoints/spi0_aloha_mix0+15_util0301_full/foldShirt+0_0225-0301+15quick+9quickCrinkle_full/79999/params"),
+        num_train_steps=20_000,
+        save_interval=10_000,
+        log_interval=10,
+        checkpoint_base_dir="/pfstem/lyc/checkpoints",
     ),
+    TrainConfig(
+        name="spi0_aloha_multitask4_full",
+        model=pi0.Pi0Config(action_horizon=50, max_token_len=48),
+        sample_weights_cfg="/pfstem/lyc/dataset/data_sample_multitask4_0312.json",
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id=["20250312_MultiTask4"],
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_multitask4_full",
+                asset_id=["20250312_MultiTask4"],  # use last-stage norm data, just copy from assets/spi0_aloha_mix0+15_util0301_full/FlattenShirt25_01
+            ),
+            adapt_to_pi=False,
+            default_prompt=None,
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            "prompt": "prompt",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        batch_size=128,
+        num_workers=8,
+        fsdp_devices=4,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=100_000, 
+                                                     warmup_steps=1_000,
+                                                     peak_lr=2.5e-5, 
+                                                     decay_lr=2.5e-6),
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        num_train_steps=100_000,
+        save_interval=10_000,
+        log_interval=10,
+        checkpoint_base_dir="/pfstem/lyc/checkpoints",
+    )
 ]
 
 if len({config.name for config in _CONFIGS}) != len(_CONFIGS):
