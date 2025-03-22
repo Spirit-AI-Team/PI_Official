@@ -31,6 +31,8 @@ import tqdm
 import numpy as np
 import time
 import ipdb
+import glob
+import json
 '''
 uv run examples/libero/convert_ours_to_lerobot.py --data-dir /hy-tmp/lmz/pi0_data/example --create-from-scratch
 param:
@@ -39,7 +41,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
 FPS = 30
-REPO_NAME = "FlattenShirt_EEF_Gripper_0318_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -84,8 +86,10 @@ dataset_paths = [
                     # '/mnt/pfs-chihiro/20250313',
                     # '/mnt/pfs-chihiro/20250314',
                     # '/mnt/pfs-chihiro/20250315',
-                    '/mnt/pfs-chihiro/20250317',
+                    # '/mnt/pfs-chihiro/20250317',
                     '/mnt/pfs-chihiro/20250318',
+                    # '/mnt/pfs-chihiro/20250319',
+                    # '/mnt/pfs-chihiro/20250320',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
@@ -95,26 +99,30 @@ DATASET_TASK = {}
 # '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL02_DYF03_PI0STEP01FINE_CXJ_ai_hdf5':'Flatten the shirt',
 for p in dataset_files:
     # if 'PI0STEP01AUG' in p:
-    #     DATASET_TASK[p] = 'Flatten the shirt'
-    # if 'PI0STACK_HF' in p:
-    #     DATASET_TASK[p] = 'Fold up again and stack the shirt to the corner'
-    if '01FULL_HF' in p and 'WW' not in p:
-        DATASET_TASK[p] = 'Flatten the shirt'
-    # elif '15QUICK_HF' in p:
-    #      DATASET_TASK[p] = 'Fold the shirt'
-    else:
-        pass
+        # DATASET_TASK[p] = "Flatten the shirt"
+        # DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
+    if 'PI0STACK_HF' in p:
+    #     # DATASET_TASK[p] = "Fold up again and stack the shirt to the corner"
+        DATASET_TASK[p] = 'Stack the shirt: fold up the shirt again and stack the shirt to the corner'
+    # if '01FULL_HF' in p:
+        # DATASET_TASK[p] = "Flatten the shirt"
+        # DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
+    # if '15QUICK_HF' in p:
+    #     # DATASET_TASK[p] = "Fold the shirt"
+    #      DATASET_TASK[p] = "Fold the shirt: fold up once on both sides of the shirt, then rotate the shirt to vertical state, and finally fold the bottom part to the top"
+
 
 
 # ipdb.set_trace()
 def main(data_dir: str = '', *, 
          push_to_hub: bool = False, 
-         create_from_scratch: bool = True,
-         mapping:dict = EEF_MAPPING_CMD_GRIPPER,
+         create_from_scratch: bool = False,
+         mapping:dict = EEF_MAPPING_CMD,
          ):
     # Clean up any existing dataset in the output directory
+    output_path = LEROBOT_HOME / REPO_NAME
     if create_from_scratch:
-        output_path = LEROBOT_HOME / REPO_NAME
+        raise Exception('dataset exists!')
         print (f'remove old path: {output_path}')
         if output_path.exists():
             shutil.rmtree(output_path)
@@ -172,8 +180,9 @@ def main(data_dir: str = '', *,
     #   tensor Nx14
     #   6        1       6         1
     #   l_joints l_grip  r_joints  r_grip
-
-
+    cnt = len(glob.glob(os.path.join(output_path, 'data_info*.json')))
+    with open(f'{output_path}/data_info{cnt}.json','w') as f:
+        json.dump(DATASET_TASK, f)
     for raw_dataset_name, task_instruction in DATASET_TASK.items():
         # raw_dataset_name, task_instruction = pair  
         # try:
