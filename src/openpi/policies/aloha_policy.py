@@ -90,6 +90,9 @@ class AlohaInputs(transforms.DataTransformFn):
         if "prompt" in data:
             inputs["prompt"] = data["prompt"]
 
+        if "actions_status" in data:
+            inputs["actions_status"] = data["actions_status"]
+
         return inputs
 
 
