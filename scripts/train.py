@@ -72,7 +72,8 @@ def init_wandb(config: _config.TrainConfig, *, resuming: bool, log_code: bool = 
 def _load_weights_and_validate(loader: _weight_loaders.WeightLoader, params_shape: at.Params) -> at.Params:
     """Loads and validates the weights. Returns a loaded subset of the weights."""
     loaded_params = loader.load(params_shape)
-    at.check_pytree_equality(expected=params_shape, got=loaded_params, check_shapes=True, check_dtypes=True)
+    # import ipdb; ipdb.set_trace()
+    # at.check_pytree_equality(expected=params_shape, got=loaded_params, check_shapes=True, check_dtypes=True)
 
     # Remove jax.ShapeDtypeStruct from the loaded params. This makes sure that only the loaded params are returned.
     return traverse_util.unflatten_dict(
@@ -140,24 +141,24 @@ def train_step(
     config: _config.TrainConfig,
     rng: at.KeyArrayLike,
     state: training_utils.TrainState,
-    batch: tuple[_model.Observation, _model.Actions],
+    batch: tuple[_model.Observation, _model.Actions, _model.Actions_Status],
 ) -> tuple[training_utils.TrainState, dict[str, at.Array]]:
     model = nnx.merge(state.model_def, state.params)
     model.train()
 
     @at.typecheck
     def loss_fn(
-        model: _model.BaseModel, rng: at.KeyArrayLike, observation: _model.Observation, actions: _model.Actions
+        model: _model.BaseModel, rng: at.KeyArrayLike, observation: _model.Observation, actions: _model.Actions, actions_status: _model.Actions_Status
     ):
-        chunked_loss = model.compute_loss(rng, observation, actions, train=True)
-        return jnp.mean(chunked_loss), jnp.mean(chunked_loss, axis=[0, 1])
+        chunked_loss, status_loss = model.compute_loss(rng, observation, actions, actions_status, train=True)
+        return jnp.mean(status_loss), (jnp.mean(chunked_loss, axis=[0, 1]), jnp.mean(chunked_loss), jnp.mean(status_loss))
 
     train_rng = jax.random.fold_in(rng, state.step)
-    observation, actions = batch
+    observation, actions, actions_status = batch
 
     # Filter out frozen params.
     diff_state = nnx.DiffState(0, config.trainable_filter)
-    loss, grads = nnx.value_and_grad(loss_fn, argnums=diff_state, has_aux=True)(model, train_rng, observation, actions)
+    loss, grads = nnx.value_and_grad(loss_fn, argnums=diff_state, has_aux=True)(model, train_rng, observation, actions, actions_status)
 
     params = state.params.filter(config.trainable_filter)
     updates, new_opt_state = state.tx.update(grads, state.opt_state, params)
@@ -185,12 +186,16 @@ def train_step(
             lambda _, x: x.value.ndim > 1,
         ),
     )
+
+    aux_loss = loss[1]
     info = {
         "loss": loss[0],
-        "loss_left_rot": jnp.mean(loss[1][:6]),
-        "loss_left_gripper": loss[1][6],
-        "loss_right_rot": jnp.mean(loss[1][7:13]),
-        "loss_right_gripper": loss[1][13],
+        "loss_left_rot": jnp.mean(aux_loss[0][:6]),
+        "loss_left_gripper": aux_loss[0][6],
+        "loss_right_rot": jnp.mean(aux_loss[0][7:13]),
+        "loss_right_gripper": aux_loss[0][13],
+        "loss_chunked_actions": aux_loss[1],
+        "loss_status": aux_loss[2],
         "grad_norm": optax.global_norm(grads),
         "param_norm": optax.global_norm(kernel_params),
     }

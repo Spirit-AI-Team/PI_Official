@@ -25,6 +25,7 @@ import openpi.shared.normalize as _normalize
 import openpi.training.optimizer as _optimizer
 import openpi.training.weight_loaders as weight_loaders
 import openpi.transforms as _transforms
+import openpi.shared.nnx_utils as nnx_utils
 
 ModelType: TypeAlias = _model.ModelType
 # Work around a tyro issue with using nnx.filterlib.Filter directly.
@@ -719,14 +720,62 @@ _CONFIGS = [
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(
+        name="spi0_aloha_eef_task_state",
+        model=pi0.Pi0Config(action_horizon=60),
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id="AllShirt_EEF_0306_15",
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_eef_task_state",
+                asset_id="AllShirt_EEF_0306_15",
+            ),
+            adapt_to_pi=False,
+            # interp_rate=3,
+            # default_prompt="fold the shirt",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            "prompt": "prompt",
+                            "actions_status": "actions_status",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        batch_size=32,
+        num_workers=8,
+        fsdp_devices=4,
+        freeze_dtype='bf32',
+        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_eef_pretrain/shirt_EEF_pretrains2_0316/9999/params"),
+        num_train_steps=30_000,
+        # freeze_filter=pi0.Pi0Config(
+        #     paligemma_variant="gemma_2b_freeze", action_expert_variant="gemma_300m_freeze"
+        # ).get_freeze_filter(),
+        freeze_filter=nnx.Not(nnx_utils.PathRegex(".*status.*")),
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        checkpoint_base_dir="/pfstem/wenxuan/resources/checkpoints",
+    ),
+    TrainConfig(
         name="spi0_aloha_eef_full",
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="FlattenShirt_EEF_WW_0318",
+            repo_id="FlattenShirt_EEF_0306_11",
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_full",
-                asset_id="FlattenShirt_EEF_WW_0318",
+                asset_id="FlattenShirt_EEF_0306_11",
             ),
             adapt_to_pi=False,
             # interp_rate=3,
@@ -754,7 +803,7 @@ _CONFIGS = [
         batch_size=32,
         num_workers=4,
         fsdp_devices=2,
-        weight_loader=weight_loaders.CheckpointWeightLoader("/root/PI_Official/data/checkpoints/spi0_aloha_eef_pretrain/shirt_EEF_pretrains2_0316/9999/params"),
+        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_eef_full/FlattenShirt_EEF_0306_11_debug/59999"),
         num_train_steps=30_000,
         lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
@@ -920,8 +969,8 @@ _CONFIGS = [
             ),
         ),
         batch_size=256,
-        num_workers=16,
-        fsdp_devices=8,
+        num_workers=8,
+        fsdp_devices=4,
         weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
         num_train_steps=10_000,
         lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=120_000),

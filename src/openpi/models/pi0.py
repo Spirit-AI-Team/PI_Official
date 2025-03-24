@@ -141,6 +141,16 @@ class Pi0Config(_model.BaseModelConfig):
         return nnx.All(*filters)
 
 
+class MLP(nnx.Module):
+  def __init__(self, din: int, dmid: int, dout: int, *, rngs: nnx.Rngs):
+    self.linear1 = nnx.Linear(din, dmid, rngs=rngs)
+    self.bn = nnx.BatchNorm(dmid, rngs=rngs)
+    self.linear2 = nnx.Linear(dmid, dout, rngs=rngs)
+
+  def __call__(self, x: jax.Array):
+    x = nnx.gelu(self.bn(self.linear1(x)))
+    return self.linear2(x)
+
 class Pi0(_model.BaseModel):
     def __init__(self, config: Pi0Config, rngs: nnx.Rngs):
         super().__init__(config.action_dim, config.action_horizon, config.max_token_len)
@@ -170,19 +180,32 @@ class Pi0(_model.BaseModel):
         self.action_time_mlp_in = nnx.Linear(2 * action_expert_config.width, action_expert_config.width, rngs=rngs)
         self.action_time_mlp_out = nnx.Linear(action_expert_config.width, action_expert_config.width, rngs=rngs)
         self.action_out_proj = nnx.Linear(action_expert_config.width, config.action_dim, rngs=rngs)
+        # self.action_status_proj = nnx.Linear(action_expert_config.width, 1, rngs=rngs)
+        # self.action_status_proj_linear1 = nnx.Linear(action_expert_config.width, action_expert_config.width//4, rngs=rngs)
+        # self.action_status_proj_bn = nnx.BatchNorm(action_expert_config.width//4, rngs=rngs)
+        # self.action_status_proj_linear2 = nnx.Linear(action_expert_config.width//4, 1, rngs=rngs)
+
+        # version 3 of actions status
+        self.action_status_image_tokens_proj = MLP(2 * action_expert_config.width, 256, 64, rngs=rngs)
+        self.action_status_lang_tokens_proj = MLP(2 * action_expert_config.width, 256, 64, rngs=rngs)
+        self.action_status_suffix_tokens_proj = MLP(action_expert_config.width, action_expert_config.width//4, 256, rngs=rngs)
+        self.action_status_suffix_out_proj = MLP(action_expert_config.width, action_expert_config.width//4, 256, rngs=rngs)
+        self.action_status_proj = MLP(768, 64, 1, rngs=rngs)
 
     @at.typecheck
     def embed_prefix(
         self, obs: _model.Observation
-    ) -> tuple[at.Float[at.Array, "b s emb"], at.Bool[at.Array, "b s"], at.Bool[at.Array, " s"]]:
+    ): # -> tuple[at.Float[at.Array, "b s emb"], at.Bool[at.Array, "b s"], at.Bool[at.Array, " s"]]:
         input_mask = []
         ar_mask = []
         tokens = []
+        image_tokens_list = []
         # embed images
         for name in obs.images:
             image_tokens, _ = self.PaliGemma.img(obs.images[name], train=False)
 
             tokens.append(image_tokens)
+            image_tokens_list.append(image_tokens)
             input_mask.append(
                 einops.repeat(
                     obs.image_masks[name],
@@ -203,7 +226,7 @@ class Pi0(_model.BaseModel):
         tokens = jnp.concatenate(tokens, axis=1)
         input_mask = jnp.concatenate(input_mask, axis=1)
         ar_mask = jnp.array(ar_mask)
-        return tokens, input_mask, ar_mask
+        return tokens, input_mask, ar_mask, image_tokens_list, tokenized_inputs
 
     @at.typecheck
     def embed_suffix(
@@ -237,9 +260,34 @@ class Pi0(_model.BaseModel):
         ar_mask = jnp.array(ar_mask)
         return tokens, input_mask, ar_mask
 
+    def merge_tokens(
+            self, image_tokens, lang_tokens, suffix_tokens, suffix_out
+    ):
+        merge_prefix_tokens = []
+        for img_token in image_tokens:
+            merge_prefix_tokens.append(jnp.mean(self.action_status_image_tokens_proj(img_token), axis=1))
+        
+        merge_prefix_tokens.append(jnp.mean(self.action_status_lang_tokens_proj(lang_tokens), axis=1))
+        merged_prefix_tokens = jnp.concatenate(merge_prefix_tokens, axis=-1)
+
+        merge_tokens = []
+        merge_tokens.append(
+            einops.repeat(
+                merged_prefix_tokens,
+                "b c -> b s c",
+                s=suffix_tokens.shape[1],
+            )
+        )
+        merge_tokens.append(self.action_status_suffix_tokens_proj(suffix_tokens))
+        merge_tokens.append(self.action_status_suffix_out_proj(suffix_out))
+        merged_tokens = jnp.concatenate(merge_tokens, axis=-1)
+        pred_status = self.action_status_proj(merged_tokens)
+
+        return pred_status
+
     @override
     def compute_loss(
-        self, rng: at.KeyArrayLike, observation: _model.Observation, actions: _model.Actions, *, train: bool = False
+        self, rng: at.KeyArrayLike, observation: _model.Observation, actions: _model.Actions, actions_status: _model.Actions_Status, *, train: bool = False
     ) -> at.Float[at.Array, "*b ah"]:
         preprocess_rng, noise_rng, time_rng = jax.random.split(rng, 3)
         observation = _model.preprocess_observation(preprocess_rng, observation, train=train)
@@ -255,7 +303,7 @@ class Pi0(_model.BaseModel):
         # print(f'normal print {noise.shape}')
         # jax.debug.breakpoint()
         # one big forward pass of prefix + suffix at once
-        prefix_tokens, prefix_mask, prefix_ar_mask = self.embed_prefix(observation)
+        prefix_tokens, prefix_mask, prefix_ar_mask, image_tokens_list, lang_tokens = self.embed_prefix(observation)
         suffix_tokens, suffix_mask, suffix_ar_mask = self.embed_suffix(observation, x_t, time)
         input_mask = jnp.concatenate([prefix_mask, suffix_mask], axis=1)
         ar_mask = jnp.concatenate([prefix_ar_mask, suffix_ar_mask], axis=0)
@@ -265,9 +313,13 @@ class Pi0(_model.BaseModel):
             [prefix_tokens, suffix_tokens], mask=attn_mask, positions=positions
         )
         v_t = self.action_out_proj(suffix_out[:, -self.action_horizon :])
-        # jax.debug.breakpoint()
+
+        pred_status = self.merge_tokens(image_tokens_list, lang_tokens, suffix_tokens, suffix_out)[:, -self.action_horizon:, 0]
+        
+        # pred_status = self.action_status_proj(suffix_out[:, -self.action_horizon:])[:, :, 0]
+        # pred_status = self.action_status_proj_linear2(nnx.gelu(self.action_status_proj_bn(self.action_status_proj_linear1(suffix_out[:, -self.action_horizon:]))))[:, :, 0]
         # return jnp.mean(jnp.square(v_t - u_t), axis=-1)
-        return jnp.square(v_t - u_t)
+        return jnp.square(v_t - u_t), jnp.square(pred_status - actions_status)
 
     @override
     def sample_actions(
