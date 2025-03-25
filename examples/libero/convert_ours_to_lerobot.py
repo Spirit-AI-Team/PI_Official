@@ -41,7 +41,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
 FPS = 30
-REPO_NAME = "ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "FlattenShirt_EEF_Gripper_AUG05"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -87,9 +87,12 @@ dataset_paths = [
                     # '/mnt/pfs-chihiro/20250314',
                     # '/mnt/pfs-chihiro/20250315',
                     # '/mnt/pfs-chihiro/20250317',
-                    '/mnt/pfs-chihiro/20250318',
+                    # '/mnt/pfs-chihiro/20250318',
                     # '/mnt/pfs-chihiro/20250319',
                     # '/mnt/pfs-chihiro/20250320',
+                    # '/mnt/pfs-chihiro/20250321',
+                    '/mnt/pfs-chihiro/20250322',
+                    '/mnt/pfs-chihiro/20250324',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
@@ -98,15 +101,15 @@ for dataset_path in dataset_paths:
 DATASET_TASK = {}
 # '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL02_DYF03_PI0STEP01FINE_CXJ_ai_hdf5':'Flatten the shirt',
 for p in dataset_files:
-    # if 'PI0STEP01AUG' in p:
+    if 'PI0STEP01AUG' in p:
         # DATASET_TASK[p] = "Flatten the shirt"
-        # DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
-    if 'PI0STACK_HF' in p:
+        DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
+    # if 'PI0STACK_HF' in p:
     #     # DATASET_TASK[p] = "Fold up again and stack the shirt to the corner"
-        DATASET_TASK[p] = 'Stack the shirt: fold up the shirt again and stack the shirt to the corner'
+        # DATASET_TASK[p] = 'Stack the shirt: fold up the shirt again and stack the shirt to the corner'
     # if '01FULL_HF' in p:
-        # DATASET_TASK[p] = "Flatten the shirt"
-        # DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
+    #     # DATASET_TASK[p] = "Flatten the shirt"
+    #     DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
     # if '15QUICK_HF' in p:
     #     # DATASET_TASK[p] = "Fold the shirt"
     #      DATASET_TASK[p] = "Fold the shirt: fold up once on both sides of the shirt, then rotate the shirt to vertical state, and finally fold the bottom part to the top"
@@ -116,16 +119,16 @@ for p in dataset_files:
 # ipdb.set_trace()
 def main(data_dir: str = '', *, 
          push_to_hub: bool = False, 
-         create_from_scratch: bool = False,
-         mapping:dict = EEF_MAPPING_CMD,
+         create_from_scratch: bool = True,
+         mapping:dict = EEF_MAPPING_CMD_GRIPPER,
          ):
     # Clean up any existing dataset in the output directory
     output_path = LEROBOT_HOME / REPO_NAME
     if create_from_scratch:
-        raise Exception('dataset exists!')
-        print (f'remove old path: {output_path}')
+        # print (f'remove old path: {output_path}')
         if output_path.exists():
-            shutil.rmtree(output_path)
+            raise Exception('dataset exists!')
+            # shutil.rmtree(output_path)
 
     # Create LeRobot dataset, define features to store
     # OpenPi assumes that proprio is stored in `state` and actions in `action`

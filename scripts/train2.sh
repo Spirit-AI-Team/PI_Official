@@ -1,7 +1,7 @@
 CONFIG=spi0_aloha_eef_full2
 # TASK=shirt_pretrains2_0225
 # TASK=FlattenShirt_EEF_0306_11_debug
-TASK=Flatten_PickShirt_EEF_0317_19
+TASK=FlattenShirt_EEF_Gripper_AUG05_ft32
 CKPT=29999
 
 cd /root/PI_Official
