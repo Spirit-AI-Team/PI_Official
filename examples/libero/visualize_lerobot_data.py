@@ -12,7 +12,8 @@ import ffmpeg
 from pathlib import Path
 
 # set the LEROBOT_HOME and REPO_NAME to the dataset you need.
-REPO_NAME = "FlattenShirt_EEF_0306_11_fix"
+LEROBOT_HOME=Path("/pfstem/wenxuan/resources/.cache/huggingface/lerobot")
+REPO_NAME = "FlattenShirt_EEF_0324_validate_lerobot"
 
 def vidwrite(filename, images, framerate=10, vcodec='libx264'):
     """
@@ -89,7 +90,7 @@ def main(num_episodes_to_visualize=20, episodes_idx_to_visualize = None):
         # states = np.empty((0, 14))
         for data_idx in range(ep_start, ep_end):
             value_dict = dataset[data_idx]
-            actions = np.concatenate((actions, value_dict['actions'][None,...].numpy()), axis=0)
+            actions = np.concatenate((actions, value_dict['action'][None,...].numpy()), axis=0)
 
             camera0_rgb = (value_dict['observation.images.cam_high'].permute(1, 2, 0).numpy() * 255).astype(np.uint8)
             camera1_rgb = (value_dict['observation.images.cam_left_wrist'].permute(1, 2, 0).numpy() * 255).astype(np.uint8)
@@ -101,9 +102,9 @@ def main(num_episodes_to_visualize=20, episodes_idx_to_visualize = None):
             # draw prompt
             task_index = value_dict['task_index'].item()
             prompt = dataset.meta.tasks[task_index]
-            # cv2.putText(camera_images, prompt, (5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 1)
-            camera_images = put_chinese_text(camera_images, prompt, (5, 20), font_size=20, text_color=(255, 0, 0))
-            cv2.putText(camera_images, str(fps) + " fps", (width - 200, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 1)
+            cv2.putText(camera_images, prompt, (5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 1)
+            # camera_images = put_chinese_text(camera_images, prompt, (5, 20), font_size=20, text_color=(255, 0, 0))
+            # cv2.putText(camera_images, str(fps) + " fps", (width - 200, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 1)
 
             frame_idx = data_idx - ep_start.item()
 

@@ -759,12 +759,13 @@ _CONFIGS = [
         fsdp_devices=4,
         freeze_dtype='bf32',
         weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_eef_pretrain/shirt_EEF_pretrains2_0316/9999/params"),
-        num_train_steps=30_000,
+        # weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/wenxuan/resources/checkpoints/spi0_aloha_eef_task_state/spi0_aloha_eef_task_state_0319_4/29999/params"),
+        num_train_steps=60_000,
         # freeze_filter=pi0.Pi0Config(
         #     paligemma_variant="gemma_2b_freeze", action_expert_variant="gemma_300m_freeze"
         # ).get_freeze_filter(),
         freeze_filter=nnx.Not(nnx_utils.PathRegex(".*status.*")),
-        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=60_000),
         checkpoint_base_dir="/pfstem/wenxuan/resources/checkpoints",
     ),
     TrainConfig(
