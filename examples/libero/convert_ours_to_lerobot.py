@@ -41,7 +41,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
 FPS = 30
-REPO_NAME = "StackShirt_EEF_Gripper_AUG01"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "MultiTask_6Objs_0402_03"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -92,12 +92,16 @@ dataset_paths = [
                     # '/mnt/pfs-chihiro/20250320',
                     # '/mnt/pfs-chihiro/20250321',
                     # '/mnt/pfs-chihiro/20250324',
-                    '/mnt/pfs-chihiro/20250327',
-                    '/mnt/pfs-chihiro/20250328',
+                    # '/mnt/pfs-chihiro/20250327',
+                    # '/mnt/pfs-chihiro/20250328',
+                    # '/mnt/pfs-chihiro/20250329',
+                    # '/mnt/pfs-chihiro/20250331',
+                    '/mnt/pfs-chihiro/20250402',
+                    '/mnt/pfs-chihiro/20250403',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
-    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) ]#if 'HF' in p]
+    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path)]#if 'HF' in p]
 
 DATASET_TASK = {}
 # '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL02_DYF03_PI0STEP01FINE_CXJ_ai_hdf5':'Flatten the shirt',
@@ -105,16 +109,17 @@ for p in dataset_files:
     # if 'STEP01AUG06' in p:
         # DATASET_TASK[p] = "Flatten the shirt"
         # DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
-    if 'PI0STACK_HF' in p:
+    # if 'PI0STACK_HF' in p:
     #     # DATASET_TASK[p] = "Fold up again and stack the shirt to the corner"
-        DATASET_TASK[p] = 'Stack the shirt: fold up the shirt again and stack the shirt to the corner'
+        # DATASET_TASK[p] = 'Stack the shirt: fold up the shirt again and stack the shirt to the corner'
     # if '01FULL_HF' in p:
     #     # DATASET_TASK[p] = "Flatten the shirt"
         # DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
     # if '15QUICK_HF' in p:
     #     # DATASET_TASK[p] = "Fold the shirt"
         #  DATASET_TASK[p] = "Fold the shirt: fold up once on both sides of the shirt, then rotate the shirt to vertical state, and finally fold the bottom part to the top"
-
+    if 'MULTI_' in p:
+        DATASET_TASK[p] = p.split('_')[-2]
 
 # ipdb.set_trace()
 def main(data_dir: str = '', *, 
@@ -193,8 +198,17 @@ def main(data_dir: str = '', *,
         # raw_dataset_name, task_instruction = pair  
         # try:
         hdf5s_path = os.path.join(data_dir, raw_dataset_name)
-        hdf5_file_names = os.listdir(hdf5s_path)
-        hdf5_file_names.sort()
+        hdf5_file_names = glob.glob(os.path.join(raw_dataset_name, '*.hdf5'))
+        hdf5_file_names.sort(key = lambda x:int(x.split('_')[-1][:-5]))
+        # json_file = glob.glob(os.path.join(raw_dataset_name, 'info.json'))[0]
+        # with open(json_file, 'r') as f:
+        #     content = json.load(f)
+        #     valid_inds = []
+        #     for i, data in enumerate(content['datasets']):
+        #         if data['validity'] == 1:
+        #             valid_inds.append(i)
+
+        # hdf5_file_names = hdf5_file_names[valid_inds]
         for hdf5_file_name in tqdm.tqdm(hdf5_file_names, total=len(hdf5_file_names)):
             hdf5_file_path = os.path.join(hdf5s_path, hdf5_file_name)
             value_dict = {"observation.images.cam_high": None, "observation.images.cam_left_wrist": None, "observation.images.cam_right_wrist": None, "observation.state": None, "actions": None}
@@ -218,24 +232,24 @@ def main(data_dir: str = '', *,
                 gripper = value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1]
                 min_value = torch.min(gripper, dim=0, keepdim=True)[0]
                 normed_value = gripper - min_value
-                normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6)
-                value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1] = normed_value * 5.
+                # normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6)
+                value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1] = normed_value #* 5.
                 gripper = value_dict['observation.state'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1]
                 min_value = torch.min(gripper, dim=0, keepdim=True)[0]
                 normed_value = gripper - min_value
-                normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6) 
-                value_dict['observation.state'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1] = normed_value * 5.
+                # normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6) 
+                value_dict['observation.state'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1] = normed_value #* 5.
 
                 gripper = value_dict['actions'][..., LEFT_GRIPPER:LEFT_GRIPPER+1]
                 min_value = torch.min(gripper, dim=0, keepdim=True)[0]
                 normed_value = gripper - min_value
-                normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6)
-                value_dict['actions'][..., LEFT_GRIPPER:LEFT_GRIPPER+1] = normed_value * 5.
+                # normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6)
+                value_dict['actions'][..., LEFT_GRIPPER:LEFT_GRIPPER+1] = normed_value #* 5.
                 gripper = value_dict['actions'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1]
                 min_value = torch.min(gripper, dim=0, keepdim=True)[0]
                 normed_value = gripper - min_value
-                normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6) 
-                value_dict['actions'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1] = normed_value * 5.
+                # normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6) 
+                value_dict['actions'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1] = normed_value #* 5.
 
                 len_traj = value_dict["observation.state"].shape[0]
                 for i in range(len_traj):

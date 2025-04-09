@@ -1,8 +1,8 @@
 CONFIG=spi0_aloha_eef_multi_full
 # TASK=shirt_pretrains2_0225
 # TASK=FlattenShirt_EEF_0306_11_debug
-TASK=Shirt_EEF_Gripper_05AndScene1
-CKPT=14999
+TASK=MultiTask_6Objs_0331_03_pi0base
+CKPT=29999
 
 cd /root/PI_Official
 source .venv/bin/activate

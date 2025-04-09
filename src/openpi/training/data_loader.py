@@ -52,7 +52,17 @@ class TransformedDataset(Dataset[T_co]):
         self._transform = _transforms.compose(transforms)
 
     def __getitem__(self, index: SupportsIndex) -> T_co:
-        return self._transform(self._dataset[index])
+        res = self._transform(self._dataset[index])
+        if 'observation.state' in res:
+            res['observation.state'][:7] *= 0
+            # res['observation.state'][13] *= 0
+        elif 'state' in res:
+            res['state'][:7] *= 0
+            # res['state'][13] *= 0
+
+        res['actions'][..., :7] *= 0
+        return res
+        # return self._transform(self._dataset[index])
 
     def __len__(self) -> int:
         return len(self._dataset)
