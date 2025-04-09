@@ -1,15 +1,15 @@
-CONFIG=spi0_aloha_eef_full
+CONFIG=spi0_aloha_eef_multi_full
 # TASK=shirt_pretrains2_0225
 # TASK=FlattenShirt_EEF_0306_11_debug
-TASK=FlattenShirt_EEF_Gripper_AUG05_ft256
-CKPT=4999
+TASK=Shirt_EEF_Gripper_05AndScene1
+CKPT=14999
 
 cd /root/PI_Official
 source .venv/bin/activate
 export XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 #compute norm
-CUDA_VISIBLE_DEVICES=0 python scripts/compute_norm_stats.py --config_name $CONFIG --max_frames 10000
+# CUDA_VISIBLE_DEVICES=0 python scripts/compute_norm_stats_multi.py --config_name $CONFIG --max_frames 10000
 
 #train model
 CUDA_VISIBLE_DEVICES=0,1,2,3 python scripts/train.py $CONFIG --exp-name=$TASK --resume
@@ -23,7 +23,7 @@ zip -r $TASK.zip $CKPT
 expect <<EOF
 spawn oss login
 expect {
-    "Username:" { send "\b\b\b\b\b\b\b\b\b\b\b15600155670\r" }
+    "Username:" { send "\b\b\b\b\b\b\b\b\b\b\b18401132402\r" }
 }
 expect "Password:" { send "spirit-ai\r" }
 expect eof

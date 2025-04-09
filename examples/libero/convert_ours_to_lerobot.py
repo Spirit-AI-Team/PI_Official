@@ -41,7 +41,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
 FPS = 30
-REPO_NAME = "FlattenShirt_EEF_Gripper_AUG05"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "StackShirt_EEF_Gripper_AUG01"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -91,29 +91,29 @@ dataset_paths = [
                     # '/mnt/pfs-chihiro/20250319',
                     # '/mnt/pfs-chihiro/20250320',
                     # '/mnt/pfs-chihiro/20250321',
-                    '/mnt/pfs-chihiro/20250322',
-                    '/mnt/pfs-chihiro/20250324',
+                    # '/mnt/pfs-chihiro/20250324',
+                    '/mnt/pfs-chihiro/20250327',
+                    '/mnt/pfs-chihiro/20250328',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
-    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'HF' in p]
+    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) ]#if 'HF' in p]
 
 DATASET_TASK = {}
 # '/pfstem/likaiyu/resources/hdf5/0_1new/20250225_Y_AL02_DYF03_PI0STEP01FINE_CXJ_ai_hdf5':'Flatten the shirt',
 for p in dataset_files:
-    if 'PI0STEP01AUG' in p:
+    # if 'STEP01AUG06' in p:
         # DATASET_TASK[p] = "Flatten the shirt"
-        DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
-    # if 'PI0STACK_HF' in p:
+        # DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
+    if 'PI0STACK_HF' in p:
     #     # DATASET_TASK[p] = "Fold up again and stack the shirt to the corner"
-        # DATASET_TASK[p] = 'Stack the shirt: fold up the shirt again and stack the shirt to the corner'
+        DATASET_TASK[p] = 'Stack the shirt: fold up the shirt again and stack the shirt to the corner'
     # if '01FULL_HF' in p:
     #     # DATASET_TASK[p] = "Flatten the shirt"
-    #     DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
+        # DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
     # if '15QUICK_HF' in p:
     #     # DATASET_TASK[p] = "Fold the shirt"
-    #      DATASET_TASK[p] = "Fold the shirt: fold up once on both sides of the shirt, then rotate the shirt to vertical state, and finally fold the bottom part to the top"
-
+        #  DATASET_TASK[p] = "Fold the shirt: fold up once on both sides of the shirt, then rotate the shirt to vertical state, and finally fold the bottom part to the top"
 
 
 # ipdb.set_trace()
@@ -127,8 +127,11 @@ def main(data_dir: str = '', *,
     if create_from_scratch:
         # print (f'remove old path: {output_path}')
         if output_path.exists():
-            raise Exception('dataset exists!')
-            # shutil.rmtree(output_path)
+            content = input('Dataset already exists! Do you want to remove it?: Y/N')
+            if content == 'Y':
+                shutil.rmtree(output_path)
+            else:
+                return
 
     # Create LeRobot dataset, define features to store
     # OpenPi assumes that proprio is stored in `state` and actions in `action`
@@ -165,12 +168,12 @@ def main(data_dir: str = '', *,
                     "names": ["actions"],
                 },
             },
-            image_writer_threads=40,
+            image_writer_threads=20,
             image_writer_processes=10,
         )
     else:
         dataset = LeRobotDataset(repo_id=REPO_NAME, local_files_only=True)
-        dataset.start_image_writer(num_threads=40, num_processes=10)
+        dataset.start_image_writer(num_threads=20, num_processes=10)
 
     # Loop over raw Libero datasets and write episodes to the LeRobot dataset
     # You can modify this for your own data format

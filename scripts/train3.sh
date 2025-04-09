@@ -22,7 +22,7 @@ zip -r $TASK.zip $CKPT
 expect <<EOF
 spawn oss login
 expect {
-    "Username:" { send "\b\b\b\b\b\b\b\b\b\b\b15600155670\r" }
+    "Username:" { send "\b\b\b\b\b\b\b\b\b\b\b18401132402\r" }
 }
 expect "Password:" { send "spirit-ai\r" }
 expect eof

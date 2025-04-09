@@ -14,6 +14,7 @@ import jax.numpy as jnp
 import optax
 import tqdm_loggable.auto as tqdm
 import wandb
+import os
 
 import openpi.models.model as _model
 import openpi.shared.array_typing as at
@@ -200,6 +201,10 @@ def train_step(
 def main(config: _config.TrainConfig):
     init_logging()
     logging.info(f"Running on: {platform.node()}")
+    save_path = str(config.checkpoint_dir)
+    os.makedirs(save_path, exist_ok = True)
+    with open(os.path.join(save_path, 'config.txt'), 'w') as f:
+        f.write(str(config))
 
     if config.batch_size % jax.device_count() != 0:
         raise ValueError(
@@ -223,7 +228,7 @@ def main(config: _config.TrainConfig):
     )
     init_wandb(config, resuming=resuming, enabled=config.wandb_enabled)
 
-    data_loader = _data_loader.create_data_loader(
+    data_loader = _data_loader.create_multi_data_loader(
         config,
         sharding=data_sharding,
         num_workers=config.num_workers,

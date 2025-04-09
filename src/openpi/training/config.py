@@ -31,7 +31,7 @@ ModelType: TypeAlias = _model.ModelType
 Filter: TypeAlias = nnx.filterlib.Filter
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class AssetsConfig:
     """Determines the location of assets (e.g., norm stats) that will be used to set up the data pipeline.
 
@@ -55,10 +55,10 @@ class AssetsConfig:
 
     # Asset id. If not provided, the repo id will be used. This allows users to reference assets that describe
     # different robot platforms.
-    asset_id: str | None = None
+    asset_id: str | None | list = None
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class DataConfig:
     # LeRobot repo id. If None, fake data will be created.
     repo_id: str | None = None
@@ -96,7 +96,7 @@ class GroupFactory(Protocol):
         """Create a group."""
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class ModelTransformFactory(GroupFactory):
     """Creates model transforms for standard pi0 models."""
 
@@ -134,10 +134,10 @@ class ModelTransformFactory(GroupFactory):
                 )
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class DataConfigFactory(abc.ABC):
     # The LeRobot repo id.
-    repo_id: str = tyro.MISSING
+    repo_id: str | list = tyro.MISSING
     # Determines how the assets will be loaded.
     assets: AssetsConfig = dataclasses.field(default_factory=AssetsConfig)
     # Base config that will be updated by the factory.
@@ -170,7 +170,7 @@ class DataConfigFactory(abc.ABC):
         return None
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class FakeDataConfig(DataConfigFactory):
     repo_id: str = "fake"
 
@@ -179,7 +179,7 @@ class FakeDataConfig(DataConfigFactory):
         return DataConfig(repo_id=self.repo_id)
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class SimpleDataConfig(DataConfigFactory):
     # Factory for the data transforms.
     data_transforms: tyro.conf.Suppress[GroupFactory] = dataclasses.field(default_factory=GroupFactory)
@@ -196,7 +196,7 @@ class SimpleDataConfig(DataConfigFactory):
         )
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class LeRobotAlohaDataConfig(DataConfigFactory):
     # If true, will convert joint dimensions to deltas with respect to the current state before passing to the model.
     # Gripper dimensions will remain in absolute values.
@@ -250,7 +250,7 @@ class LeRobotAlohaDataConfig(DataConfigFactory):
         )
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class LeRobotLiberoDataConfig(DataConfigFactory):
     @override
     def create(self, assets_dirs: pathlib.Path, model_config: _model.BaseModelConfig) -> DataConfig:
@@ -293,7 +293,7 @@ class LeRobotLiberoDataConfig(DataConfigFactory):
         )
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=False)
 class TrainConfig:
     # Name of the config. Must be unique. Will be used to reference this config.
     name: tyro.conf.Suppress[str]
@@ -358,6 +358,8 @@ class TrainConfig:
     # eg. if total device is 4 and fsdp devices is 2; then the model will shard to 2 devices and run
     # data parallel between 2 groups of devices.
     fsdp_devices: int = 1
+
+    sample_weights_cfg: str = "./examples/libero/datasets_weights.json"
     freeze_dtype: str = "bf16"
 
     @property
@@ -498,50 +500,7 @@ _CONFIGS = [
         lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
-    TrainConfig(
-        name="spi0_aloha_finetune_lora",
-        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora", action_horizon=25),
-        exp_name = 'test',
-        data=LeRobotAlohaDataConfig(
-            repo_id="FlattenShirtSlow0304",
-            assets=AssetsConfig(
-                assets_dir="assets/spi0_aloha_finetune_lora",
-                asset_id="FlattenShirtSlow0304",
-            ),
-            adapt_to_pi=True,
-            # default_prompt="fold the shirt",
-            repack_transforms=_transforms.Group(
-                inputs=[
-                    _transforms.RepackTransform(
-                        {
-                            "images": {
-                                "cam_high": "observation.images.cam_high",
-                                "cam_left_wrist": "observation.images.cam_left_wrist",
-                                "cam_right_wrist": "observation.images.cam_right_wrist",
-                            },
-                            "state": "observation.state",
-                            "actions": "actions",
-                            "prompt": "prompt",
-                        }
-                    )
-                ]
-            ),
-            base_config=DataConfig(
-                local_files_only=True,  # Set to True for local-only datasets.
-                prompt_from_task=True,
-            ),
-        ),
-        freeze_filter=pi0.Pi0Config(
-            paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"
-        ).get_freeze_filter(),
-        batch_size=32,
-        num_workers=4,
-        fsdp_devices=2,
-        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_s2pretrain_full/shirt_pretrains2_halfall_retrain/9999/params"),
-        num_train_steps=30_000,
-        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
-        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
-    ),
+
     TrainConfig(
         name="spi0_aloha_s2pretrain_full",
         model=pi0.Pi0Config(action_horizon=25),
@@ -720,14 +679,15 @@ _CONFIGS = [
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(
-        name="spi0_aloha_eef_full",
+        name="spi0_aloha_eef_multi_full",
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
+        sample_weights_cfg = "/root/PI_Official/data/lerobot/ALLShirt_EEF_0307_19/sample3.json",
         data=LeRobotAlohaDataConfig(
-            repo_id="FlattenShirt_EEF_Gripper_AUG05",
+            repo_id=["ALLShirt_EEF_0307_19", "ALLShirt_EEF_Gripper_Scene1_0325_26","FlattenShirt_EEF_Gripper_AUG05"],
             assets=AssetsConfig(
-                assets_dir="assets/spi0_aloha_eef_full",
-                asset_id="FlattenShirt_EEF_Gripper_AUG05",
+                assets_dir="assets/spi0_aloha_eef_multi_full",
+                asset_id=["ALLShirt_EEF_0307_19","ALLShirt_EEF_0307_19","ALLShirt_EEF_0307_19"],
             ),
             adapt_to_pi=False,
             # interp_rate=3,
@@ -754,25 +714,25 @@ _CONFIGS = [
         ),
         batch_size=256,
         num_workers=12,
-        keep_period = 1000,
+        keep_period = 5000,
         fsdp_devices=4,
         weight_loader=weight_loaders.CheckpointWeightLoader("/root/PI_Official/data/checkpoints/spi0_aloha_eef_pretrain/shirt_EEF_pretrains2_0307_19_6w/50000/params"),
-        num_train_steps=5_000,
-        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        num_train_steps=15_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=15_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(
-        name="spi0_aloha_eef_full2",
+        name="spi0_aloha_eef_multi_full2",
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
+        sample_weights_cfg = "/root/PI_Official/data/lerobot/FlattenShirt_EEF_Gripper_AUG06/sample1.json",
         data=LeRobotAlohaDataConfig(
-            repo_id="FlattenShirt_EEF_Gripper_AUG05",
+            repo_id=["ALLShirt_EEF_0307_19", "FlattenShirt_EEF_Gripper_AUG06"],
             assets=AssetsConfig(
-                assets_dir="assets/spi0_aloha_eef_full2",
-                asset_id="FlattenShirt_EEF_Gripper_AUG05",
+                assets_dir="assets/spi0_aloha_eef_multi_full2",
+                asset_id=["ALLShirt_EEF_0307_19", "ALLShirt_EEF_0307_19"],
             ),
             adapt_to_pi=False,
-            # delta_base='actions',
             # interp_rate=3,
             repack_transforms=_transforms.Group(
                 inputs=[
@@ -795,12 +755,13 @@ _CONFIGS = [
                 prompt_from_task=True,
             ),
         ),
-        batch_size=32,
+        batch_size=256,
         num_workers=12,
+        keep_period = 5000,
         fsdp_devices=4,
-        weight_loader=weight_loaders.CheckpointWeightLoader("/root/PI_Official/data/checkpoints/spi0_aloha_eef_pretrain/shirt_EEF_pretrains2_0307_19_6w/50000/params"),
-        num_train_steps=30_000,
-        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        weight_loader=weight_loaders.CheckpointWeightLoader("/root/PI_Official/data/checkpoints/spi0_aloha_eef_multi_full/FlattenShirt_EEF_Gripper_addAUG05_ft256/9999/params"),
+        num_train_steps=10_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=10_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(
