@@ -28,6 +28,7 @@ class EnvMode(enum.Enum):
     SPI0_ARX_FULL2 = 'SPI0_ARX_FULL2'
     SPI0_ARX_FULL3 = 'SPI0_ARX_FULL3'
     SPI0_ARX_FULL4 = 'SPI0_ARX_FULL4'
+    SPI0_ARX_FULL_TEST = 'SPI0_ARX_FULL_TEST'
 @dataclasses.dataclass
 class Checkpoint:
     """Load a policy from a trained checkpoint."""
@@ -76,28 +77,34 @@ DEFAULT_CHECKPOINT: dict[EnvMode, Checkpoint] = {
     EnvMode.SPI0_ARX: Checkpoint(
         config="spi0_aloha_eef_full",
         # dir="checkpoints/shirtflatten_0225_27_bases2_full/29999",
-        dir="checkpoints/FlattenShirt_EEF_0306_07_s2eef/29999",
+        dir="checkpoints/Flatten_PickShirt_EEF_0317_19/27000",
+    ),
+    EnvMode.SPI0_ARX_FULL_TEST: Checkpoint(
+        config="spi0_aloha_eef_full_test",
+        # dir="checkpoints/shirtflatten_0225_27_bases2_full/29999",
+        dir="checkpoints/0409_multi_task_op_v6_1_2w/20000",
     ),
     EnvMode.SPI0_ARX_FULL: Checkpoint(
-        config="spi0_aloha_eef_full",
-        # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
-        # dir="checkpoints/spi0_aloha_eef_15quick_full_0312/25000",
-        dir="checkpoints/AllShirt_GripperEEF_0315_19/29999",
+        config="spi0_aloha_eef_full3",
+        # dir="checkpoints/shirt_EEF_0307_19_ft4w/39999",
+        # dir="checkpoints/MultiTask_6Objs_0328_29_shirts2/29999",
+        dir="checkpoints/PICKPLACE_Pen2Penhold_0409/29999",
+        # dir = "checkpoints/MultiTask_6Objs_0331_01_pi0base_debug/29999",
     ),
     EnvMode.SPI0_ARX_FULL2: Checkpoint(
         config="spi0_aloha_eef_full2",
         # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
-        dir="checkpoints/FlattenShirt_EEF_0306_11_debug/59999",
+        dir="checkpoints/MultiTask_6Objs_0331_03_pi0base/29999",
     ),
     EnvMode.SPI0_ARX_FULL3: Checkpoint(
-        config="spi0_aloha_eef_full3",
+        config="spi0_aloha_eef_full",
         # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
-        dir="checkpoints/shirt_EEF_pretrains2_0316/9999",
+        dir="checkpoints/Shirt_EEF_Gripper_addScene1_ft_aug05/9999",
     ),
     EnvMode.SPI0_ARX_FULL4: Checkpoint(
-        config="spi0_aloha_eef_full4",
-        # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
-        dir="checkpoints/FlattenShirt_EEF_0306_11_full/29999",
+        config="spi0_aloha_eef_full",
+        # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",3
+        dir="checkpoints/Shirt_EEF_Gripper_05AndScene1/14999",
     ),
     EnvMode.SPI0_ARX_LoRA: Checkpoint(
         config="spi0_aloha_eef_lora",

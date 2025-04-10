@@ -67,7 +67,7 @@ class Runtime:
             # Sleep to maintain the desired frame rate
             now = time.time()
             dt = now - last_step_time
-            print(f'dt is: {dt}')
+            # print(f'dt is: {dt}')
             if dt < step_time:
                 time.sleep(step_time - dt)
                 last_step_time = time.time()

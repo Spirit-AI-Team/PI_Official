@@ -38,6 +38,11 @@ class ActionChunkBroker(_base_policy.BasePolicy):
             fake_results = {'actions': np.array(ActionChunkBroker.default_action)}
             return fake_results
         
+        if obs['action_horizon']:
+            self._action_horizon = obs['action_horizon']
+            self._frequency = obs['frequency']
+            self._last_results = None
+            
         if self._last_results is None or obs['flush_buffer']:
             # pdb.set_trace()
             tic = time.time()

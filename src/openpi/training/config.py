@@ -536,10 +536,10 @@ _CONFIGS = [
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="AllShirt_GripperEEF_0315_19",
+            repo_id="ALLShirt_EEF_0307_19",
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_full",
-                asset_id="AllShirt_GripperEEF_0315_19",
+                asset_id="ALLShirt_EEF_0307_19",
                 # asset_id="Fold_Shirt_0312",
             ),
             adapt_to_pi=False,
@@ -555,32 +555,34 @@ _CONFIGS = [
                             },
                             "state": "observation.state",
                             "actions": "actions",
+                            "prompt": "prompt",
                         }
                     )
                 ]
             ),
             base_config=DataConfig(
                 local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
             ),
         ),
         batch_size=32,
         num_workers=4,
         fsdp_devices=2,
-        weight_loader=weight_loaders.CheckpointWeightLoader("checkpoints/shirtflatten_0225_base0223/29999/params"),
+        weight_loader=weight_loaders.CheckpointWeightLoader("checkpoints/shirt_EEF_pretrains2_0307_19_6w/50000/params"),
         num_train_steps=30_000,
         lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(
-        name="spi0_aloha_eef_full2",
+        name="spi0_aloha_eef_full_test",
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="FlattenShirt_EEF_0306_11",
+            repo_id="20250312_MultiTask4",
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_full",
-                # asset_id="FlattenShirt_EEF_0306_07",
-                asset_id="FlattenShirt_EEF_0306_11",
+                asset_id="20250312_MultiTask4",
+                # asset_id="Fold_Shirt_0312",
             ),
             adapt_to_pi=False,
             # default_prompt="fold the shirt",
@@ -595,12 +597,56 @@ _CONFIGS = [
                             },
                             "state": "observation.state",
                             "actions": "actions",
+                            "prompt": "prompt",
                         }
                     )
                 ]
             ),
             base_config=DataConfig(
                 local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        batch_size=32,
+        num_workers=4,
+        fsdp_devices=2,
+        weight_loader=weight_loaders.CheckpointWeightLoader("checkpoints/shirt_EEF_pretrains2_0307_19_6w/50000/params"),
+        num_train_steps=30_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
+    ),
+    TrainConfig(
+        name="spi0_aloha_eef_full2",
+        model=pi0.Pi0Config(action_horizon=60),
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id="MultiTask_6Objs_0331_01",
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_eef_full",
+                # asset_id="FlattenShirt_EEF_0306_07",
+                asset_id="MultiTask_6Objs_0331_01",
+            ),
+            adapt_to_pi=False,
+            # default_prompt="fold the shirt",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            "prompt": "prompt",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
             ),
         ),
         batch_size=32,
@@ -616,14 +662,14 @@ _CONFIGS = [
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="AllShirt_EEF_0316",
+            repo_id="MultiTask_PeninPenhold_0409",
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_full3",
                 # asset_id="FlattenShirt_EEF_0306_07",
-                asset_id="AllShirt_EEF_0316",
+                asset_id="MultiTask_PeninPenhold_0409",
             ),
             adapt_to_pi=False,
-            # default_prompt="fold the shirt",
+            # default_prompt="fold the shirt",W
             repack_transforms=_transforms.Group(
                 inputs=[
                     _transforms.RepackTransform(
@@ -635,12 +681,14 @@ _CONFIGS = [
                             },
                             "state": "observation.state",
                             "actions": "actions",
+                            "prompt": "prompt",
                         }
                     )
                 ]
             ),
             base_config=DataConfig(
                 local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
             ),
         ),
         batch_size=32,

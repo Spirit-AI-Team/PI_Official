@@ -1,0 +1,153 @@
+commit d09e74c392b584397e4f5cb6d753e4d7626e9a7d
+Author: Your Name <you@example.com>
+Date:   Thu Mar 20 19:56:37 2025 +0800
+
+    merge
+
+diff --git a/.gitignore b/.gitignore
+index 145ed60..36bb015 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -4,6 +4,7 @@ checkpoints/
+ data/
+ demo/
+ wandb/
++policy_records/
+ *.png
+ 
+ # Byte-compiled / optimized / DLL files
+diff --git a/packages/openpi-client/src/openpi_client/action_chunk_broker.py b/packages/openpi-client/src/openpi_client/action_chunk_broker.py
+index e06860b..217f5b1 100644
+--- a/packages/openpi-client/src/openpi_client/action_chunk_broker.py
++++ b/packages/openpi-client/src/openpi_client/action_chunk_broker.py
+@@ -72,61 +72,7 @@ class ActionChunkBroker(_base_policy.BasePolicy):
+ 
+         for i in range(act_dim): 
+             new_actions[i] = np.interp(np.linspace(0, 1, self._frequency), np.linspace(0,1,self._action_horizon), actions.T[i])
+-            # if i == 6 or i==13:
+-            #     new_actions[i] -= 1
++            if i == 6 or i==13:
++                new_actions[i][new_actions[i] <= 1] = 0
+         new_results = {'actions':new_actions.T}
+-        return new_results
+-    
+-class ActionChunkBroker2(_base_policy.BasePolicy):
+-    """Wraps a policy to return action chunks one-at-a-time.
+-
+-    Assumes that the first dimension of all action fields is the chunk size.
+-
+-    A new inference call to the inner policy is only made when the current
+-    list of chunks is exhausted.
+-    """
+-
+-    def __init__(self, policy: _base_policy.BasePolicy, action_horizon: int, frequency: int):
+-        self._policy = policy
+-
+-        self._action_horizon = action_horizon
+-        self._frequency = frequency
+-        self._cur_step: int = 0
+-
+-        self._last_results: Dict[str, np.ndarray] | None = None
+-        self.time_counter = 0
+-        self.time_step = 0
+-
+-    @override
+-    def infer(self, obs: Dict) -> Dict:  # noqa: UP006
+-
+-
+-        self._last_results = self._policy.infer(obs)
+-        # pdb.set_trace()
+-        self._last_results = self.postprocess(self._last_results)
+-        results = self._last_results
+-        # results = tree.map_structure(lambda x: x[self._cur_step, ...], self._last_results)
+-
+-
+-        return results
+-
+-    @override
+-    def reset(self) -> None:
+-        self._policy.reset()
+-        self._last_results = None
+-        self._cur_step = 0
+-
+-    def postprocess(self, raw_results) -> dict:
+-
+-        raw_actions = raw_results['actions']
+-        actions = raw_actions[:self._action_horizon, ...]
+-        _, act_dim = actions.shape # ah, 14
+-        new_actions = np.zeros((act_dim, self._frequency))#14, freq
+-
+-        for i in range(act_dim): 
+-            new_actions[i] = np.interp(np.linspace(0, 1, self._frequency), np.linspace(0,1,self._action_horizon), actions.T[i])
+-            if i == 6 or i == 13:
+-                new_actions[i] -= 1
+-        # arrow_actions = pa.array(new_actions.T)
+-        new_results = {'actions': new_actions.T}
+         return new_results
+\ No newline at end of file
+diff --git a/scripts/run_policy1.sh b/scripts/run_policy1.sh
+index 9b2d8f7..900387e 100755
+--- a/scripts/run_policy1.sh
++++ b/scripts/run_policy1.sh
+@@ -5,4 +5,4 @@ python scripts/serve_policy.py --env SPI0_ARX_FULL2 --default_prompt='Flatten th
+ 
+ 
+ # python examples/arx_r5_real_teleop/main.py
+-# python scripts/serve_policy.py --env SPI0_ARX --default_prompt='Flatten the shirt'
+\ No newline at end of file
++# python scripts/serve_policy.py --env SPI0_ARX_FULL3 --default_prompt='Flatten the shirt'
+\ No newline at end of file
+diff --git a/scripts/serve_policy.py b/scripts/serve_policy.py
+index db4509b..af2c600 100644
+--- a/scripts/serve_policy.py
++++ b/scripts/serve_policy.py
+@@ -82,7 +82,7 @@ DEFAULT_CHECKPOINT: dict[EnvMode, Checkpoint] = {
+         config="spi0_aloha_eef_full",
+         # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
+         # dir="checkpoints/spi0_aloha_eef_15quick_full_0312/25000",
+-        dir="checkpoints/FlattenShirt_EEF_0306_15_LTJ/19999",
++        dir="checkpoints/AllShirt_GripperEEF_0315_19/29999",
+     ),
+     EnvMode.SPI0_ARX_FULL2: Checkpoint(
+         config="spi0_aloha_eef_full2",
+@@ -92,7 +92,7 @@ DEFAULT_CHECKPOINT: dict[EnvMode, Checkpoint] = {
+     EnvMode.SPI0_ARX_FULL3: Checkpoint(
+         config="spi0_aloha_eef_full3",
+         # dir="checkpoints/shirtflatten_EEF_06_07_full/29999",
+-        dir="checkpoints/FlattenShirt_EEF_0306_15_WW/29999",
++        dir="checkpoints/shirt_EEF_pretrains2_0316/9999",
+     ),
+     EnvMode.SPI0_ARX_FULL4: Checkpoint(
+         config="spi0_aloha_eef_full4",
+diff --git a/src/openpi/training/config.py b/src/openpi/training/config.py
+index 555697d..1bc0d67 100644
+--- a/src/openpi/training/config.py
++++ b/src/openpi/training/config.py
+@@ -536,10 +536,10 @@ _CONFIGS = [
+         model=pi0.Pi0Config(action_horizon=60),
+         exp_name = 'test',
+         data=LeRobotAlohaDataConfig(
+-            repo_id="FlattenShirt_EEF_0306_07",
++            repo_id="AllShirt_GripperEEF_0315_19",
+             assets=AssetsConfig(
+                 assets_dir="assets/spi0_aloha_eef_full",
+-                asset_id="FlattenShirt_EEF_0306_07",
++                asset_id="AllShirt_GripperEEF_0315_19",
+                 # asset_id="Fold_Shirt_0312",
+             ),
+             adapt_to_pi=False,
+@@ -616,11 +616,11 @@ _CONFIGS = [
+         model=pi0.Pi0Config(action_horizon=60),
+         exp_name = 'test',
+         data=LeRobotAlohaDataConfig(
+-            repo_id="FlattenShirt_EEF_WW_0318",
++            repo_id="AllShirt_EEF_0316",
+             assets=AssetsConfig(
+-                assets_dir="assets/spi0_aloha_eef_full",
++                assets_dir="assets/spi0_aloha_eef_full3",
+                 # asset_id="FlattenShirt_EEF_0306_07",
+-                asset_id="FlattenShirt_EEF_WW_0318",
++                asset_id="AllShirt_EEF_0316",
+             ),
+             adapt_to_pi=False,
+             # default_prompt="fold the shirt",
