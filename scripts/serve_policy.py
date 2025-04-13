@@ -82,13 +82,13 @@ DEFAULT_CHECKPOINT: dict[EnvMode, Checkpoint] = {
     EnvMode.SPI0_ARX_FULL_TEST: Checkpoint(
         config="spi0_aloha_eef_full_test",
         # dir="checkpoints/shirtflatten_0225_27_bases2_full/29999",
-        dir="checkpoints/0409_multi_task_op_v6_1_2w/20000",
+        dir="checkpoints/0410_multi_task_op_v6_1/10000",
     ),
     EnvMode.SPI0_ARX_FULL: Checkpoint(
         config="spi0_aloha_eef_full3",
         # dir="checkpoints/shirt_EEF_0307_19_ft4w/39999",
         # dir="checkpoints/MultiTask_6Objs_0328_29_shirts2/29999",
-        dir="checkpoints/PICKPLACE_Pen2Penhold_0409/29999",
+        dir="checkpoints/PICKPLACE_Pen2Penhold_0409_checked/29999",
         # dir = "checkpoints/MultiTask_6Objs_0331_01_pi0base_debug/29999",
     ),
     EnvMode.SPI0_ARX_FULL2: Checkpoint(

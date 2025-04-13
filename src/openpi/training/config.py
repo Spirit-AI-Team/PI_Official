@@ -578,10 +578,10 @@ _CONFIGS = [
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
         data=LeRobotAlohaDataConfig(
-            repo_id="20250312_MultiTask4",
+            repo_id="MultiTask_StackCup1To9_0409",
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_full",
-                asset_id="20250312_MultiTask4",
+                asset_id="MultiTask_StackCup1To9_0409",
                 # asset_id="Fold_Shirt_0312",
             ),
             adapt_to_pi=False,
