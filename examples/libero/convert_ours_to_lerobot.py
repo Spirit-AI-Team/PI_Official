@@ -41,7 +41,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
 FPS = 30
-REPO_NAME = "MultiTask_6Objs_0402_03"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "MultiTask_CanInOrganizer_0411_AUG01"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -96,8 +96,8 @@ dataset_paths = [
                     # '/mnt/pfs-chihiro/20250328',
                     # '/mnt/pfs-chihiro/20250329',
                     # '/mnt/pfs-chihiro/20250331',
-                    '/mnt/pfs-chihiro/20250402',
-                    '/mnt/pfs-chihiro/20250403',
+                    # '/mnt/pfs-chihiro/20250402',
+                    '/mnt/pfs-chihiro/20250411',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
@@ -118,8 +118,10 @@ for p in dataset_files:
     # if '15QUICK_HF' in p:
     #     # DATASET_TASK[p] = "Fold the shirt"
         #  DATASET_TASK[p] = "Fold the shirt: fold up once on both sides of the shirt, then rotate the shirt to vertical state, and finally fold the bottom part to the top"
-    if 'MULTI_' in p:
-        DATASET_TASK[p] = p.split('_')[-2]
+    # if 'MULTI_' in p:
+    #     DATASET_TASK[p] = p.split('_')[-2]
+    if 'PutCanInOrganizer' in p and 'AUG01' in p:
+        DATASET_TASK[p] = 'Put can in organizer'
 
 # ipdb.set_trace()
 def main(data_dir: str = '', *, 
@@ -199,16 +201,16 @@ def main(data_dir: str = '', *,
         # try:
         hdf5s_path = os.path.join(data_dir, raw_dataset_name)
         hdf5_file_names = glob.glob(os.path.join(raw_dataset_name, '*.hdf5'))
-        hdf5_file_names.sort(key = lambda x:int(x.split('_')[-1][:-5]))
-        # json_file = glob.glob(os.path.join(raw_dataset_name, 'info.json'))[0]
-        # with open(json_file, 'r') as f:
-        #     content = json.load(f)
-        #     valid_inds = []
-        #     for i, data in enumerate(content['datasets']):
-        #         if data['validity'] == 1:
-        #             valid_inds.append(i)
-
-        # hdf5_file_names = hdf5_file_names[valid_inds]
+        hdf5_file_names.sort(key = lambda x:int(x.split('/')[-1][:-5]))
+        json_file = glob.glob(os.path.join(raw_dataset_name, 'info.json'))[0]
+        with open(json_file, 'r') as f:
+            content = json.load(f)
+            valid_inds = []
+            for i, data in enumerate(content['datasets']):
+                if data['validity'] == 1:
+                    valid_inds.append(i)
+        # import ipdb;ipdb.set_trace()
+        hdf5_file_names = [hdf5_file_names[i] for i in valid_inds]
         for hdf5_file_name in tqdm.tqdm(hdf5_file_names, total=len(hdf5_file_names)):
             hdf5_file_path = os.path.join(hdf5s_path, hdf5_file_name)
             value_dict = {"observation.images.cam_high": None, "observation.images.cam_left_wrist": None, "observation.images.cam_right_wrist": None, "observation.state": None, "actions": None}

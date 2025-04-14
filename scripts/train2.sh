@@ -1,7 +1,7 @@
 CONFIG=spi0_aloha_eef_multi_full2
 # TASK=shirt_pretrains2_0225
 # TASK=FlattenShirt_EEF_0306_11_debug
-TASK=MultiTask_6Objs_0331_01_shirts2_debug
+TASK=PICKPLACE_CanInOrganizer_0411_AUG01
 CKPT=29999
 
 cd /root/PI_Official
@@ -9,7 +9,7 @@ source .venv/bin/activate
 export XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 #compute norm
-# CUDA_VISIBLE_DEVICES=4 python scripts/compute_norm_stats_multi.py --config_name $CONFIG --max_frames 10000
+CUDA_VISIBLE_DEVICES=4 python scripts/compute_norm_stats_multi.py --config_name $CONFIG --max_frames 10000
 
 #train model
 CUDA_VISIBLE_DEVICES=4,5,6,7 python scripts/train.py $CONFIG --exp-name=$TASK --resume
