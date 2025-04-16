@@ -2,7 +2,7 @@ CONFIG=spi0_aloha_eef_multi_full
 # TASK=shirt_pretrains2_0225
 # TASK=FlattenShirt_EEF_0306_11_debug
 # TASK=MultiTask_6Objs_0331_03_pi0base
-TASK=PICKPLACE_CanInOrganizer_0411_common
+TASK=PICKPLACE_EggInEggrack_0415_debug
 CKPT=29999
 
 cd /root/PI_Official
