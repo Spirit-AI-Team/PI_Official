@@ -680,7 +680,7 @@ _CONFIGS = [
     ),
     TrainConfig(
         name="spi0_aloha_eef_multi_full",
-        model=pi0.Pi0Config(action_horizon=60),
+        model=pi0.Pi0Config(action_horizon=30),
         exp_name = 'test',
         sample_weights_cfg = "/root/PI_Official/data/lerobot/MultiTask_EggInEggrack_0414/sample1.json",
         data=LeRobotAlohaDataConfig(
@@ -725,12 +725,12 @@ _CONFIGS = [
         name="spi0_aloha_eef_multi_full2",
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
-        sample_weights_cfg = "/root/PI_Official/data/lerobot/MultiTask_PutPlateOnRack_0415/sample1.json",
+        sample_weights_cfg = "/root/PI_Official/data/lerobot/MultiTask_PutToyInOrganizer_0416/sample1.json",
         data=LeRobotAlohaDataConfig(
-            repo_id=["MultiTask_PutPlateOnRack_0415"],
+            repo_id=["MultiTask_PutToyInOrganizer_0416"],
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_multi_full2",
-                asset_id=["MultiTask_PutPlateOnRack_0415"],#,"MultiTask_6Objs_0402_03"],
+                asset_id=["MultiTask_PutToyInOrganizer_0416"],#,"MultiTask_6Objs_0402_03"],
             ),
             adapt_to_pi=False,
             # interp_rate=3,
