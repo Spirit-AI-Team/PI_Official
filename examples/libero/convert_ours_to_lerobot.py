@@ -41,7 +41,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
 FPS = 30
-REPO_NAME = "MultiTask_PutToyInOrganizer_0416"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "MultiTask_PutEggInEggrack_0418"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -79,7 +79,7 @@ EEF_MAPPING = {
 dataset_paths = [
                     # '/mnt/pfs-chihiro/20250306',
                     # '/mnt/pfs-chihiro/20250402',
-                    '/mnt/pfs-chihiro/20250416',
+                    '/mnt/pfs-chihiro/20250418',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
@@ -102,8 +102,8 @@ for p in dataset_files:
         #  DATASET_TASK[p] = "Fold the shirt: fold up once on both sides of the shirt, then rotate the shirt to vertical state, and finally fold the bottom part to the top"
     # if 'MULTI_' in p:
     #     DATASET_TASK[p] = p.split('_')[-2]
-    if 'PutToyInOrganizer' in p:
-        DATASET_TASK[p] = 'Put toy in organizer'
+    if 'PutEgggrack' in p:
+        DATASET_TASK[p] = 'Put egg in eggrack'
 
 # ipdb.set_trace()
 def main(data_dir: str = '', *, 

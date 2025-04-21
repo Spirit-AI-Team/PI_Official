@@ -633,61 +633,17 @@ _CONFIGS = [
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(
-        name="spi0_aloha_eef_vlm_freeze2",
+        name="spi0_aloha_eef_multi_full",
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
+        sample_weights_cfg = "/root/PI_Official/data/lerobot/MultiTask_PeninPenhold_0409_checked/sample_all_0419.json",
         data=LeRobotAlohaDataConfig(
-            repo_id="FlattenShirt_EEF_0306_11_fix",
-            assets=AssetsConfig(
-                assets_dir="assets/spi0_aloha_eef_vlm_freeze2",
-                asset_id="FlattenShirt_EEF_0306_11_fix",
-            ),
-            adapt_to_pi=False,
-            # interp_rate=3,
-            # default_prompt="fold the shirt",
-            repack_transforms=_transforms.Group(
-                inputs=[
-                    _transforms.RepackTransform(
-                        {
-                            "images": {
-                                "cam_high": "observation.images.cam_high",
-                                "cam_left_wrist": "observation.images.cam_left_wrist",
-                                "cam_right_wrist": "observation.images.cam_right_wrist",
-                            },
-                            "state": "observation.state",
-                            "actions": "actions",
-                            "prompt": "prompt",
-                        }
-                    )
-                ]
-            ),
-            base_config=DataConfig(
-                local_files_only=True,  # Set to True for local-only datasets.
-                prompt_from_task=True,
-            ),
-        ),
-        batch_size=32,
-        num_workers=8,
-        fsdp_devices=4,
-        freeze_dtype='bf32',
-        weight_loader=weight_loaders.CheckpointWeightLoader("/root/PI_Official/data/checkpoints/spi0_aloha_eef_pretrain/shirt_EEF_pretrains2_0316/9999/params"),
-        num_train_steps=60_000,
-        freeze_filter=pi0.Pi0Config(
-            paligemma_variant="gemma_2b_freeze",
-        ).get_freeze_filter(),
-        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=60_000),
-        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
-    ),
-    TrainConfig(
-        name="spi0_aloha_eef_multi_full",
-        model=pi0.Pi0Config(action_horizon=30),
-        exp_name = 'test',
-        sample_weights_cfg = "/root/PI_Official/data/lerobot/MultiTask_EggInEggrack_0414/sample1.json",
-        data=LeRobotAlohaDataConfig(
-            repo_id=["MultiTask_EggInEggrack_0414"],
+            repo_id=["MultiTask_CanInOrganizer_0411", "MultiTask_CanInOrganizer_0411_AUG01", "MultiTask_EggInEggrack_0414", 
+            "MultiTask_PeninPenhold_0409_checked", "MultiTask_PutAnimalInOrganizer_0414", "MultiTask_PutToyInOrganizer_0416",
+            "MultiTask_PutPlateOnRack_0415", "MultiTask_PutTissueInOrganizer_0417", "MultiTask_PutEggInEggrack_0418"],
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_multi_full",
-                asset_id=["MultiTask_EggInEggrack_0414"],
+                asset_id=["MultiTask_PutToyInOrganizer_0416"]*9,
             ),
             adapt_to_pi=False,
             # interp_rate=3,
@@ -712,13 +668,13 @@ _CONFIGS = [
                 prompt_from_task=True,
             ),
         ),
-        batch_size=64,
+        batch_size=128,
         num_workers=12,
         keep_period = 5000,
         fsdp_devices=4,
         weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
-        num_train_steps=30_000,
-        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        num_train_steps=60_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=120_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(
