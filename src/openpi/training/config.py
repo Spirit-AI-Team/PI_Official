@@ -209,6 +209,7 @@ class LeRobotAlohaDataConfig(DataConfigFactory):
     adapt_to_pi: bool = True
     interp_rate: int = 1
     delta_base: str = 'state'
+    delta_mask: tuple = (6,-1,6,-1)
     # Repack transforms.
     repack_transforms: tyro.conf.Suppress[_transforms.Group] = dataclasses.field(
         default=_transforms.Group(
@@ -233,7 +234,7 @@ class LeRobotAlohaDataConfig(DataConfigFactory):
             outputs=[aloha_policy.AlohaOutputs(adapt_to_pi=self.adapt_to_pi)],
         )
         if self.use_delta_joint_actions:
-            delta_action_mask = _transforms.make_bool_mask(6, -1, 6, -1)
+            delta_action_mask = _transforms.make_bool_mask(self.delta_mask[0],self.delta_mask[1],self.delta_mask[2],self.delta_mask[3])
             data_transforms = data_transforms.push(
                 inputs=[_transforms.DeltaActions(mask=delta_action_mask, delta_base=self.delta_base)],
                 outputs=[_transforms.AbsoluteActions(mask=delta_action_mask, delta_base=self.delta_base)],
@@ -500,48 +501,6 @@ _CONFIGS = [
         lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
-
-    TrainConfig(
-        name="spi0_aloha_s2pretrain_full",
-        model=pi0.Pi0Config(action_horizon=25),
-        exp_name = 'test',
-        data=LeRobotAlohaDataConfig(
-            repo_id="FoldShirtAll",
-            assets=AssetsConfig(
-                assets_dir="assets/spi0_aloha_s2pretrain_full",
-                asset_id="FoldShirtAll",
-            ),
-            adapt_to_pi=True,
-            # default_prompt="fold the shirt",
-            repack_transforms=_transforms.Group(
-                inputs=[
-                    _transforms.RepackTransform(
-                        {
-                            "images": {
-                                "cam_high": "observation.images.cam_high",
-                                "cam_left_wrist": "observation.images.cam_left_wrist",
-                                "cam_right_wrist": "observation.images.cam_right_wrist",
-                            },
-                            "state": "observation.state",
-                            "actions": "actions",
-                            "prompt": "prompt",
-                        }
-                    )
-                ]
-            ),
-            base_config=DataConfig(
-                local_files_only=True,  # Set to True for local-only datasets.
-                prompt_from_task=True,
-            ),
-        ),
-        batch_size=512,
-        num_workers=4,
-        fsdp_devices=8,
-        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=60_000),
-        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
-        num_train_steps=20_000,
-        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
-    ),
     TrainConfig(
         name="spi0_aloha_eef_lora",
         model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora", action_horizon=60),
@@ -636,14 +595,12 @@ _CONFIGS = [
         name="spi0_aloha_eef_multi_full",
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
-        sample_weights_cfg = "/root/PI_Official/data/lerobot/MultiTask_PeninPenhold_0409_checked/sample_all_0419.json",
+        sample_weights_cfg = "/root/PI_Official/data/lerobot/HRPI_PutPlateOnRack_EEF_0422_23/sample1.json",
         data=LeRobotAlohaDataConfig(
-            repo_id=["MultiTask_CanInOrganizer_0411", "MultiTask_CanInOrganizer_0411_AUG01", "MultiTask_EggInEggrack_0414", 
-            "MultiTask_PeninPenhold_0409_checked", "MultiTask_PutAnimalInOrganizer_0414", "MultiTask_PutToyInOrganizer_0416",
-            "MultiTask_PutPlateOnRack_0415", "MultiTask_PutTissueInOrganizer_0417", "MultiTask_PutEggInEggrack_0418"],
+            repo_id=["HRPI_PutPlateOnRack_EEF_0422_23"],
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_multi_full",
-                asset_id=["MultiTask_PutToyInOrganizer_0416"]*9,
+                asset_id=["HRPI_PutPlateOnRack_EEF_0422_23"],
             ),
             adapt_to_pi=False,
             # interp_rate=3,
@@ -668,28 +625,29 @@ _CONFIGS = [
                 prompt_from_task=True,
             ),
         ),
-        batch_size=128,
+        batch_size=32,
         num_workers=12,
         keep_period = 5000,
-        fsdp_devices=4,
+        fsdp_devices=2,
         weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
-        num_train_steps=60_000,
-        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=120_000),
+        num_train_steps=30_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(
         name="spi0_aloha_eef_multi_full2",
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
-        sample_weights_cfg = "/root/PI_Official/data/lerobot/MultiTask_PutToyInOrganizer_0416/sample1.json",
+        sample_weights_cfg = "/root/PI_Official/data/lerobot/HRPI_PutPlateOnRack_Rjoints_0422_23/sample1.json",
         data=LeRobotAlohaDataConfig(
-            repo_id=["MultiTask_PutToyInOrganizer_0416"],
+            repo_id=["HRPI_PutPlateOnRack_Rjoints_0422_23"],
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_multi_full2",
-                asset_id=["MultiTask_PutToyInOrganizer_0416"],#,"MultiTask_6Objs_0402_03"],
+                asset_id=["HRPI_PutPlateOnRack_Rjoints_0422_23"],#,"MultiTask_6Objs_0402_03"],
             ),
             adapt_to_pi=False,
             # interp_rate=3,
+            delta_mask=(-1,-1,7,7),
             repack_transforms=_transforms.Group(
                 inputs=[
                     _transforms.RepackTransform(
@@ -711,7 +669,7 @@ _CONFIGS = [
                 prompt_from_task=True,
             ),
         ),
-        batch_size=64,
+        batch_size=32,
         num_workers=12,
         keep_period = 5000,
         fsdp_devices=4,
@@ -762,48 +720,6 @@ _CONFIGS = [
         weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
         num_train_steps=60_000,
         lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=120_000),
-        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
-    ),
-    TrainConfig(
-        name="spi0_aloha_eef_full4",
-        model=pi0.Pi0Config(action_horizon=60),
-        exp_name = 'test',
-        data=LeRobotAlohaDataConfig(
-            repo_id="FlattenShirt_EEF_WHJ_0318",
-            assets=AssetsConfig(
-                assets_dir="assets/spi0_aloha_eef_full4",
-                asset_id="FlattenShirt_EEF_WHJ_0318",
-            ),
-            adapt_to_pi=False,
-            # delta_base='actions',
-            # interp_rate=3,
-            repack_transforms=_transforms.Group(
-                inputs=[
-                    _transforms.RepackTransform(
-                        {
-                            "images": {
-                                "cam_high": "observation.images.cam_high",
-                                "cam_left_wrist": "observation.images.cam_left_wrist",
-                                "cam_right_wrist": "observation.images.cam_right_wrist",
-                            },
-                            "state": "observation.state",
-                            "actions": "actions",
-                            "prompt": "prompt",
-                        }
-                    )
-                ]
-            ),
-            base_config=DataConfig(
-                local_files_only=True,  # Set to True for local-only datasets.
-                prompt_from_task=True,
-            ),
-        ),
-        batch_size=32,
-        num_workers=4,
-        fsdp_devices=2,
-        weight_loader=weight_loaders.CheckpointWeightLoader("/root/PI_Official/data/checkpoints/spi0_aloha_eef_pretrain/shirt_EEF_pretrains2_0316/9999/params"),
-        num_train_steps=20_000,
-        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=20_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(

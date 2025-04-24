@@ -75,7 +75,7 @@ EEF_MAPPING = {
      "observation.state":['robot0_eef_pos', 'robot0_eef_rot_axis_angle', 'robot0_gripper_width', 'robot1_eef_pos', 'robot1_eef_rot_axis_angle', 'robot1_gripper_width'],
      "actions":['robot0_eef_pos', 'robot0_eef_rot_axis_angle', 'robot0_gripper_width', 'robot1_eef_pos', 'robot1_eef_rot_axis_angle', 'robot1_gripper_width'],
 }
-ROBOT_TYPE = 'aloha'
+ROBOT_TYPE = 'moz1'
 
 dataset_paths = [
                     # '/mnt/pfs-chihiro/20250306',
@@ -120,10 +120,7 @@ for p in dataset_files:
         DATASET_TASK[p] = 'There is a can and an organizer on the table. Locate the can, pick up the can, and place the can into the organizer.'
     if 'PutPenInPenhold' in p:
         DATASET_TASK[p] = 'There is a pen and an penhold on the table. Locate the pen, pick up the pen, and place the pen into the penhold.'
-    if 'PutBowInOrganizer' in p:
-        DATASET_TASK[p] = 'There is a pen and an penhold on the table. Locate the pen, pick up the pen, and place the pen into the penhold.'
-    if 'PutBottleInOrganizer' in p:
-        DATASET_TASK[p] = 'There is a pen and an penhold on the table. Locate the pen, pick up the pen, and place the pen into the penhold.'
+
 # ipdb.set_trace()
 def main(data_dir: str = '', *, 
          push_to_hub: bool = False, 
@@ -167,12 +164,12 @@ def main(data_dir: str = '', *,
                 },
                 "observation.state": {
                     "dtype": "float32",
-                    "shape": (14,),
+                    "shape": (16,),
                     "names": ["state"],
                 },
                 "actions": {
                     "dtype": "float32",
-                    "shape": (14,),
+                    "shape": (16,),
                     "names": ["actions"],
                 },
             },
