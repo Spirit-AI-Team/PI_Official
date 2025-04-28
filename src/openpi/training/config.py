@@ -626,7 +626,7 @@ _CONFIGS = [
             ),
         ),
         batch_size=64,
-        num_workers=16,
+        num_workers=24,
         keep_period = 5000,
         fsdp_devices=8,
         weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),

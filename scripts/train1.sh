@@ -10,7 +10,7 @@ source .venv/bin/activate
 export XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 #compute norm
-# CUDA_VISIBLE_DEVICES=0 python scripts/compute_norm_stats_multi.py --config_name $CONFIG --max_frames 10000
+CUDA_VISIBLE_DEVICES=0 python scripts/compute_norm_stats_multi.py --config_name $CONFIG --max_frames 10000
 
 #train model
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python scripts/train.py $CONFIG --exp-name=$TASK --resume
