@@ -41,7 +41,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
 FPS = 30
-REPO_NAME = "HRPI_PutPlateOnRack_Rjoints_0422_23"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "MultiTask_PutStickOnTissue_2missions_0429"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -75,11 +75,8 @@ EEF_MAPPING = {
      "observation.state":['robot0_eef_pos', 'robot0_eef_rot_axis_angle', 'robot0_gripper_width', 'robot1_eef_pos', 'robot1_eef_rot_axis_angle', 'robot1_gripper_width'],
      "actions":['robot0_eef_pos', 'robot0_eef_rot_axis_angle', 'robot0_gripper_width', 'robot1_eef_pos', 'robot1_eef_rot_axis_angle', 'robot1_gripper_width'],
 }
-ROBOT_TYPE = 'aloha'
 
 dataset_paths = [
-                    # '/mnt/pfs-chihiro/20250306',
-                    # '/mnt/pfs-chihiro/20250402',
                     # '/mnt/pfs-chihiro/20250409',
                     # '/mnt/pfs-chihiro/20250410',
                     # '/mnt/pfs-chihiro/20250411',
@@ -87,15 +84,69 @@ dataset_paths = [
                     # '/mnt/pfs-chihiro/20250415',
                     # '/mnt/pfs-chihiro/20250416',
                     # '/mnt/pfs-chihiro/20250417',
-                    '/mnt/pfs-chihiro/20250422',
-                    '/mnt/pfs-chihiro/20250423',
+                    # '/mnt/pfs-chihiro/20250418',
+                    # '/mnt/pfs-chihiro/20250419',
+                    # '/mnt/pfs-chihiro/20250421',
+                    # '/mnt/pfs-chihiro/20250422',
+                    # '/mnt/pfs-chihiro/20250423',
+                    # '/mnt/pfs-chihiro/20250424',
+                    # '/mnt/pfs-chihiro/20250425',
+                    # '/mnt/pfs-chihiro/20250427',
+                    '/mnt/pfs-chihiro/20250428',
+                    '/mnt/pfs-chihiro/20250429',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
-    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path)]#if 'HF' in p]
+    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'HRPI' not in p]
+
+BLACK_LIST = set([
+    '20250422_Y_AL05_PICKPLACE_AUG01_PutBottleInOrganizer_FMS',
+    '20250421_Y_AL09_PICKPLACE_AUG02_PutBowInOrganizer_LYB',
+    '20250421_Y_AL05_PICKPLACE_AUG01_PutBowInOrganizer_ZYD',
+    '20250417_Y_AL0X_PICKPLACE_AUG02_PutTissueInOrganizer_SZH',
+    '20250417_Y_AL04_PICKPLACE_AUG01_PutTissueInOrganizer_FMS',
+    '20250415_Y_AL05_PICKPLACE_PutEgglnEggrack_ZWS',
+    '20250414_Y_AL05_PICKPLACE_PutEgglnEggrack_ZWS01',
+    '20250414_Y_AL04_PICKPLACE_PutEggInEggrack_HZY01',
+    '20250414_Y_AL04_PICKPLACE_PutEggInEggrack_HZY',
+    '20250414_Y_AL05_PICKPLACE_PutEgglnEggrack_ZWS',
+])
 
 DATASET_TASK = {}
 for p in dataset_files:
+
+    if os.path.basename(p) in BLACK_LIST:
+        print(f'Find {os.path.basename(p)} in black list, remove the path')
+        continue
+
+    # if 'PutEggInEggrack' in p:
+    #     DATASET_TASK[p] = 'There is an egg and an egg tray on the table. Locate the egg, pick up the egg, and place the egg onto the egg tray.'
+    # if 'PutToyInOrganizer' in p:
+    #     DATASET_TASK[p] = 'There is a toy and an organizer on the table. Locate the toy, pick up the toy, and place the toy into the organizer.'
+    # if 'PutTissueInOrganizer' in p:
+    #     DATASET_TASK[p] = 'There is a tissue and an organizer on the table. Locate the tissue, pick up the tissue, and place the tissue into the organizer.'
+    # if 'PutPlateOnRack' in p:
+    #     DATASET_TASK[p] = 'There is a plate and a dish drainer on the table. Locate the plate, pick up the plate, and place the plate onto the dish drainer.'
+    # if 'PutAnimalInOrganizer' in p:
+    #     DATASET_TASK[p] = 'There is an animal and an organizer on the table. Locate the animal, pick up the animal, and place the animal into the organizer.'
+    # if 'PutCanInOrganizer' in p:
+    #     DATASET_TASK[p] = 'There is a can and an organizer on the table. Locate the can, pick up the can, and place the can into the organizer.'
+    # if 'PutPenInPenhold' in p:
+    #     DATASET_TASK[p] = 'There is a pen and a penhold on the table. Locate the pen, pick up the pen, and place the pen into the penhold.'
+    # if 'PutBowInOrganizer' in p:
+    #     DATASET_TASK[p] = 'There is a bow and an organizer on the table. Locate the bow, pick up the bow, and place the bow into the organizer.'
+    # if 'PutBottleInOrganizer' in p:
+    #     DATASET_TASK[p] = 'There is a bottle and a organizer on the table. Locate the bottle, pick up the bottle, and place the bottle into the organizer.'
+    # if 'PutGlueInPenhold' in p:
+    #     DATASET_TASK[p] = 'There is a glue stick and a penhold on the table. Locate the glue stick, pick up the glue stick, and place the glue stick into the penhold.'
+    
+    if 'PutStickOnTissue' in p and 'AUG01' in p:
+        DATASET_TASK[p] = 'Rip off last piece of tissue from the toilet roll for once and go back to initial positsion.'
+    if 'PutStickOnTissue' in p and 'AUG03' in p:
+        DATASET_TASK[p] = 'Rip off last piece of tissue from the toilet roll for once and go back to initial positsion.'
+
+    if 'PutStickOnTissue' in p and 'AUG02' in p:
+        DATASET_TASK[p] = 'Use left arm to pick the sticker, and then use it to seal the toilet roll.'
     # if 'STEP01AUG06' in p:
         # DATASET_TASK[p] = "Flatten the shirt"
         # DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
@@ -105,30 +156,11 @@ for p in dataset_files:
     # if '15QUICK_HF' in p:
     #     # DATASET_TASK[p] = "Fold the shirt"
         #  DATASET_TASK[p] = "Fold the shirt: fold up once on both sides of the shirt, then rotate the shirt to vertical state, and finally fold the bottom part to the top"
-#dish drainer, egg tray
-    if 'PutEggInEggrack' in p:
-        DATASET_TASK[p] = 'There is an egg and an egg tray on the table. Locate the egg, pick up the egg, and place the egg onto the egg tray.'
-    if 'PutToyInOrganizer' in p:
-        DATASET_TASK[p] = 'There is a toy and an organizer on the table. Locate the toy, pick up the toy, and place the toy into the organizer.'
-    if 'PutTissueInOrganizer' in p:
-        DATASET_TASK[p] = 'There is a tissue and an organizer on the table. Locate the tissue, pick up the tissue, and place the tissue into the organizer.'
-    if 'PutPlateOnRack' in p:
-        DATASET_TASK[p] = 'There is a plate and an dish drainer on the table. Locate the plate, pick up the plate, and place the plate onto the dish drainer.'
-    if 'PutAnimalInOrganizer' in p:
-        DATASET_TASK[p] = 'There is an animal and an organizer on the table. Locate the animal, pick up the animal, and place the animal into the organizer.'
-    if 'PutCanInOrganizer' in p:
-        DATASET_TASK[p] = 'There is a can and an organizer on the table. Locate the can, pick up the can, and place the can into the organizer.'
-    if 'PutPenInPenhold' in p:
-        DATASET_TASK[p] = 'There is a pen and an penhold on the table. Locate the pen, pick up the pen, and place the pen into the penhold.'
-    if 'PutBowInOrganizer' in p:
-        DATASET_TASK[p] = 'There is a pen and an penhold on the table. Locate the pen, pick up the pen, and place the pen into the penhold.'
-    if 'PutBottleInOrganizer' in p:
-        DATASET_TASK[p] = 'There is a pen and an penhold on the table. Locate the pen, pick up the pen, and place the pen into the penhold.'
-# ipdb.set_trace()
+
 def main(data_dir: str = '', *, 
          push_to_hub: bool = False, 
          create_from_scratch: bool = True,
-         mapping:dict = JOINT_MAPPING,
+         mapping:dict = EEF_MAPPING_CMD_GRIPPER,
          ):
     # Clean up any existing dataset in the output directory
     output_path = LEROBOT_HOME / REPO_NAME
@@ -223,10 +255,8 @@ def main(data_dir: str = '', *,
                             # print(each_key, ep[each_key].shape, type(ep[each_key]))
                             v.append(torch.from_numpy(np.array(ep[each_key])))
                         v = torch.cat(v, dim=1)
-                        if mapping == JOINT_MAPPING and ROBOT_TYPE == 'aloha':
+                        if mapping == JOINT_MAPPING:
                             v = v[..., 2:16]
-                        if mapping == JOINT_MAPPING and ROBOT_TYPE == 'moz1':
-                            v = v[...,:16]
                         value_dict[key] = v
                     else:
                         value_dict[key] = torch.from_numpy(np.array(ep[mapping[key]]))
@@ -282,7 +312,6 @@ def main(data_dir: str = '', *,
             push_videos=True,
             license="apache-2.0",
         )
-
 
 if __name__ == "__main__":
     tic = time.time()
