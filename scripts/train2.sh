@@ -1,7 +1,7 @@
 CONFIG=spi0_aloha_eef_multi_full2
 # TASK=shirt_pretrains2_0225
 # TASK=FlattenShirt_EEF_0306_11_debug
-TASK=MultiTask_PutStickOnTissue_0429_2mission_8cards
+TASK=HRPI_MultiTask_PutPlateOnRack_0423_29
 CKPT=29999
 
 cd /root/PI_Official

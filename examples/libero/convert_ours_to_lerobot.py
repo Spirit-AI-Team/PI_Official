@@ -41,7 +41,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
 FPS = 30
-REPO_NAME = "MultiTask_PutStickOnTissue_2missions_0429"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "HRPI_MultiTask_PutEggInEggrack_0429_06"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -92,12 +92,14 @@ dataset_paths = [
                     # '/mnt/pfs-chihiro/20250424',
                     # '/mnt/pfs-chihiro/20250425',
                     # '/mnt/pfs-chihiro/20250427',
-                    '/mnt/pfs-chihiro/20250428',
+                    # '/mnt/pfs-chihiro/20250428',
                     '/mnt/pfs-chihiro/20250429',
+                    '/mnt/pfs-chihiro/20250430',
+                    '/mnt/pfs-chihiro/20250506',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
-    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'HRPI' not in p]
+    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'HRPI' in p]
 
 BLACK_LIST = set([
     '20250422_Y_AL05_PICKPLACE_AUG01_PutBottleInOrganizer_FMS',
@@ -119,8 +121,8 @@ for p in dataset_files:
         print(f'Find {os.path.basename(p)} in black list, remove the path')
         continue
 
-    # if 'PutEggInEggrack' in p:
-    #     DATASET_TASK[p] = 'There is an egg and an egg tray on the table. Locate the egg, pick up the egg, and place the egg onto the egg tray.'
+    if 'PutEggInEggrack' in p or 'PutEgglnEggrack' in p:
+        DATASET_TASK[p] = 'There is an egg and an egg tray on the table. Locate the egg, pick up the egg, and place the egg onto the egg tray.'
     # if 'PutToyInOrganizer' in p:
     #     DATASET_TASK[p] = 'There is a toy and an organizer on the table. Locate the toy, pick up the toy, and place the toy into the organizer.'
     # if 'PutTissueInOrganizer' in p:
@@ -139,14 +141,6 @@ for p in dataset_files:
     #     DATASET_TASK[p] = 'There is a bottle and a organizer on the table. Locate the bottle, pick up the bottle, and place the bottle into the organizer.'
     # if 'PutGlueInPenhold' in p:
     #     DATASET_TASK[p] = 'There is a glue stick and a penhold on the table. Locate the glue stick, pick up the glue stick, and place the glue stick into the penhold.'
-    
-    if 'PutStickOnTissue' in p and 'AUG01' in p:
-        DATASET_TASK[p] = 'Rip off last piece of tissue from the toilet roll for once and go back to initial positsion.'
-    if 'PutStickOnTissue' in p and 'AUG03' in p:
-        DATASET_TASK[p] = 'Rip off last piece of tissue from the toilet roll for once and go back to initial positsion.'
-
-    if 'PutStickOnTissue' in p and 'AUG02' in p:
-        DATASET_TASK[p] = 'Use left arm to pick the sticker, and then use it to seal the toilet roll.'
     # if 'STEP01AUG06' in p:
         # DATASET_TASK[p] = "Flatten the shirt"
         # DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
