@@ -21,6 +21,32 @@ mv $CKPT/train_state ./
 zip -r $TASK.zip $CKPT
 
 #oss upload
+# expect <<EOF
+# spawn oss login
+# expect {
+#     "Username:" { send "\b\b\b\b\b\b\b\b\b\b\b18401132402\r" }
+# }
+# expect "Password:" { send "spirit-ai\r" }
+# expect eof
+# EOF
+
+# oss ls -s -d oss://likaiyu
+# oss cp $TASK.zip oss://likaiyu/weights/
+# cd /root/PI_Official
+
+#convert and upload mozbrain checkpoint
+cd /pfstem/likaiyu/mozbrain
+python lerobot/common/policies/pi0/conversion_scripts/convert_pi0_to_hf_lerobot.py \
+    --checkpoint_dir /pfstem/likaiyu/mozbrain/data/checkpoints/$CONFIG/$TASK/$CKPT/params \
+    --output_path /pfstem/likaiyu/mozbrain/data/lerobot_ckpts/$TASK
+
+python /pfstem/likaiyu/mozbrain/add_norm_stats_to_model.py \
+    --asset_path /pfstem/likaiyu/mozbrain/data/checkpoints/$CONFIG/$TASK/$CKPT/assets \
+    --test_model_path /pfstem/likaiyu/mozbrain/data/lerobot_ckpts/$TASK
+
+cd /pfstem/likaiyu/mozbrain/data/lerobot_ckpts
+zip -r "$TASK"_lerobot.zip $TASK
+
 expect <<EOF
 spawn oss login
 expect {
@@ -29,7 +55,6 @@ expect {
 expect "Password:" { send "spirit-ai\r" }
 expect eof
 EOF
-
-oss ls -s -d oss://likaiyu
-oss cp $TASK.zip oss://likaiyu/weights/
-cd /root/PI_Official
+oss cp "$TASK"_lerobot.zip oss://likaiyu/weights/
+rm "$TASK"_lerobot.zip
+cd /pfstem/likaiyu/mozbrain
