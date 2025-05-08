@@ -391,6 +391,96 @@ _CONFIGS = [
     # Inference Aloha configs.
     #
     TrainConfig(
+        name="spi0_moz1_eef_y_dyfv2_step0to1_0507",
+        model=pi0.Pi0Config(action_horizon=16),
+        exp_name = 'test',
+        sample_weights_cfg = "/pfstem/yifeng/resources/lerobot/sample.json", # 需要定义一个sample的权重的json文件
+        data=LeRobotAlohaDataConfig(
+            repo_id=['Moz1_EEF_Y_DYFV2_Step0to1_0425',"Moz1_EEF_Y_DYFV2_Step0to1_0430","Moz1_EEF_Y_DYFV2_Step0to1_0506","Moz1_EEF_Y_DYFV2_Step0to1_0507"],
+            # repo_id=["Moz1_EEF_Y_DYFV2_Step0to1_0506_real"],
+            assets=AssetsConfig(
+                assets_dir="/pfstem/yifeng/PI_Official/assets/spi0_moz1_eef_y_dyfv2_step0to1_0506/",
+                asset_id=['Moz1_EEF_Y_DYFV2_Step0to1_0506',"Moz1_EEF_Y_DYFV2_Step0to1_0506","Moz1_EEF_Y_DYFV2_Step0to1_0506","Moz1_EEF_Y_DYFV2_Step0to1_0506"],
+                # asset_id=["Moz1_EEF_Y_DYFV2_Step0to1_0506"],
+            ),
+            adapt_to_pi=False,
+            # default_prompt="fold the shirt",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            "prompt": "prompt",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        batch_size=16,
+        num_workers=16,
+        keep_period = 5000,
+        fsdp_devices=2,
+        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_eef_pretrain/shirt_EEF_pretrains2_0307_19_6w/50000/params"),
+        num_train_steps=40_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=40_000),
+        checkpoint_base_dir="/pfstem/yifeng/checkpoints",
+    ),
+    TrainConfig(
+        name="spi0_moz1_eef_z_dyf_step0to1_0507",
+        model=pi0.Pi0Config(action_horizon=16),
+        exp_name = 'test',
+        sample_weights_cfg = "/pfstem/yifeng/resources/lerobot/sample_z.json", # 需要定义一个sample的权重的json文件
+        data=LeRobotAlohaDataConfig(
+            repo_id=['Moz1_EEF_Z_DYF_Step0to1_0507'],
+            # repo_id=["Moz1_EEF_Y_DYFV2_Step0to1_0506_real"],
+            assets=AssetsConfig(
+                assets_dir="/pfstem/yifeng/PI_Official/assets/spi0_moz1_eef_z_dyf_step0to1_0507/",
+                asset_id=['Moz1_EEF_Z_DYF_Step0to1_0507'],
+                # asset_id=["Moz1_EEF_Y_DYFV2_Step0to1_0506"],
+            ),
+            adapt_to_pi=False,
+            # default_prompt="fold the shirt",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            "prompt": "prompt",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        batch_size=16,
+        num_workers=16,
+        keep_period = 5000,
+        fsdp_devices=2,
+        weight_loader=weight_loaders.CheckpointWeightLoader("/pfstem/likaiyu/resources/checkpoints/spi0_aloha_eef_pretrain/shirt_EEF_pretrains2_0307_19_6w/50000/params"),
+        num_train_steps=40_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=40_000),
+        checkpoint_base_dir="/pfstem/yifeng/checkpoints",
+    ),
+    TrainConfig(
         name="pi0_aloha",
         model=pi0.Pi0Config(),
         data=LeRobotAlohaDataConfig(

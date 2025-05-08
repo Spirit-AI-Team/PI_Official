@@ -41,7 +41,8 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
 FPS = 30
-REPO_NAME = "HRPI_PutPlateOnRack_Rjoints_0422_23"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+# REPO_NAME = "Moz1_EEF_Z_DYF_Step0to1_0429"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "Moz1_EEF_Y_DYFV2_Step0to1_0429"
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -87,17 +88,27 @@ dataset_paths = [
                     # '/mnt/pfs-chihiro/20250415',
                     # '/mnt/pfs-chihiro/20250416',
                     # '/mnt/pfs-chihiro/20250417',
-                    '/mnt/pfs-chihiro/20250422',
-                    '/mnt/pfs-chihiro/20250423',
+                    # '/mnt/pfs-chihiro/20250422',
+                    # '/mnt/pfs-chihiro/20250423',
+                    # '/mnt/pfs-chihiro/20250424',
+                    # '/mnt/pfs-chihiro/20250425',
+                    '/mnt/pfs-chihiro/20250427',
+                    '/mnt/pfs-chihiro/20250428',
+                    '/mnt/pfs-chihiro/20250429',
+                    # '/mnt/pfs-chihiro/20250430',
+                    # '/mnt/pfs-chihiro/20250506',
+                    # '/mnt/pfs-chihiro/20250507',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
-    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path)]#if 'HF' in p]
+    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'DYFV2' in p]
 
 DATASET_TASK = {}
 for p in dataset_files:
+    # if 'STEP0to1' in p:
+    DATASET_TASK[p] = "Flatten the shirt"
     # if 'STEP01AUG06' in p:
-        # DATASET_TASK[p] = "Flatten the shirt"
+    #     DATASET_TASK[p] = "Flatten the shirt"
         # DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
     # if 'PI0STACK_HF' in p:
     #     # DATASET_TASK[p] = "Fold up again and stack the shirt to the corner"
@@ -106,26 +117,26 @@ for p in dataset_files:
     #     # DATASET_TASK[p] = "Fold the shirt"
         #  DATASET_TASK[p] = "Fold the shirt: fold up once on both sides of the shirt, then rotate the shirt to vertical state, and finally fold the bottom part to the top"
 #dish drainer, egg tray
-    if 'PutEggInEggrack' in p:
-        DATASET_TASK[p] = 'There is an egg and an egg tray on the table. Locate the egg, pick up the egg, and place the egg onto the egg tray.'
-    if 'PutToyInOrganizer' in p:
-        DATASET_TASK[p] = 'There is a toy and an organizer on the table. Locate the toy, pick up the toy, and place the toy into the organizer.'
-    if 'PutTissueInOrganizer' in p:
-        DATASET_TASK[p] = 'There is a tissue and an organizer on the table. Locate the tissue, pick up the tissue, and place the tissue into the organizer.'
-    if 'PutPlateOnRack' in p:
-        DATASET_TASK[p] = 'There is a plate and an dish drainer on the table. Locate the plate, pick up the plate, and place the plate onto the dish drainer.'
-    if 'PutAnimalInOrganizer' in p:
-        DATASET_TASK[p] = 'There is an animal and an organizer on the table. Locate the animal, pick up the animal, and place the animal into the organizer.'
-    if 'PutCanInOrganizer' in p:
-        DATASET_TASK[p] = 'There is a can and an organizer on the table. Locate the can, pick up the can, and place the can into the organizer.'
-    if 'PutPenInPenhold' in p:
-        DATASET_TASK[p] = 'There is a pen and an penhold on the table. Locate the pen, pick up the pen, and place the pen into the penhold.'
+    # if 'PutEggInEggrack' in p:
+    #     DATASET_TASK[p] = 'There is an egg and an egg tray on the table. Locate the egg, pick up the egg, and place the egg onto the egg tray.'
+    # if 'PutToyInOrganizer' in p:
+    #     DATASET_TASK[p] = 'There is a toy and an organizer on the table. Locate the toy, pick up the toy, and place the toy into the organizer.'
+    # if 'PutTissueInOrganizer' in p:
+    #     DATASET_TASK[p] = 'There is a tissue and an organizer on the table. Locate the tissue, pick up the tissue, and place the tissue into the organizer.'
+    # if 'PutPlateOnRack' in p:
+    #     DATASET_TASK[p] = 'There is a plate and an dish drainer on the table. Locate the plate, pick up the plate, and place the plate onto the dish drainer.'
+    # if 'PutAnimalInOrganizer' in p:
+    #     DATASET_TASK[p] = 'There is an animal and an organizer on the table. Locate the animal, pick up the animal, and place the animal into the organizer.'
+    # if 'PutCanInOrganizer' in p:
+    #     DATASET_TASK[p] = 'There is a can and an organizer on the table. Locate the can, pick up the can, and place the can into the organizer.'
+    # if 'PutPenInPenhold' in p:
+    #     DATASET_TASK[p] = 'There is a pen and an penhold on the table. Locate the pen, pick up the pen, and place the pen into the penhold.'
 
 # ipdb.set_trace()
 def main(data_dir: str = '', *, 
          push_to_hub: bool = False, 
          create_from_scratch: bool = True,
-         mapping:dict = JOINT_MAPPING,
+         mapping:dict = EEF_MAPPING_CMD_GRIPPER,
          ):
     # Clean up any existing dataset in the output directory
     output_path = LEROBOT_HOME / REPO_NAME
@@ -164,12 +175,12 @@ def main(data_dir: str = '', *,
                 },
                 "observation.state": {
                     "dtype": "float32",
-                    "shape": (16,),
+                    "shape": (14,),
                     "names": ["state"],
                 },
                 "actions": {
                     "dtype": "float32",
-                    "shape": (16,),
+                    "shape": (14,),
                     "names": ["actions"],
                 },
             },
@@ -229,6 +240,7 @@ def main(data_dir: str = '', *,
                         value_dict[key] = torch.from_numpy(np.array(ep[mapping[key]]))
 
                 ### norm gripper
+                # import ipdb;ipdb.set_trace()
                 gripper = value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1]
                 min_value = torch.min(gripper, dim=0, keepdim=True)[0]
                 normed_value = gripper - min_value
@@ -251,6 +263,7 @@ def main(data_dir: str = '', *,
                 # normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6) 
                 value_dict['actions'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1] = normed_value #* 5.
 
+                
                 len_traj = value_dict["observation.state"].shape[0]
                 for i in range(len_traj):
                     dataset.add_frame(
