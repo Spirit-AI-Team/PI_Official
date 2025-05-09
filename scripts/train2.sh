@@ -14,12 +14,18 @@ CUDA_VISIBLE_DEVICES=2 python scripts/compute_norm_stats_multi.py --config_name 
 #train model
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python scripts/train.py $CONFIG --exp-name=$TASK --resume
 
-#zip ckpt
-cd /pfstem/likaiyu/resources/checkpoints/$CONFIG/$TASK
-mv $CKPT/train_state ./
-zip -r $TASK.zip $CKPT
+cd /pfstem/likaiyu/mozbrain
+python lerobot/common/policies/pi0/conversion_scripts/convert_pi0_to_hf_lerobot.py \
+    --checkpoint_dir /pfstem/likaiyu/mozbrain/data/checkpoints/$CONFIG/$TASK/$CKPT/params \
+    --output_path /pfstem/likaiyu/mozbrain/data/lerobot_ckpts/$TASK
 
-#oss upload
+python /pfstem/likaiyu/mozbrain/add_norm_stats_to_model.py \
+    --asset_path /pfstem/likaiyu/mozbrain/data/checkpoints/$CONFIG/$TASK/$CKPT/assets \
+    --test_model_path /pfstem/likaiyu/mozbrain/data/lerobot_ckpts/$TASK
+
+cd /pfstem/likaiyu/mozbrain/data/lerobot_ckpts
+zip -r "$TASK"_lerobot.zip $TASK
+
 expect <<EOF
 spawn oss login
 expect {
@@ -28,7 +34,24 @@ expect {
 expect "Password:" { send "spirit-ai\r" }
 expect eof
 EOF
+oss cp "$TASK"_lerobot.zip oss://likaiyu/weights/
+rm "$TASK"_lerobot.zip
+cd /pfstem/likaiyu/mozbrain
+# #zip ckpt
+# cd /pfstem/likaiyu/resources/checkpoints/$CONFIG/$TASK
+# mv $CKPT/train_state ./
+# zip -r $TASK.zip $CKPT
 
-oss ls -s -d oss://likaiyu
-oss cp $TASK.zip oss://likaiyu/weights/
-cd /root/PI_Official
+# #oss upload
+# expect <<EOF
+# spawn oss login
+# expect {
+#     "Username:" { send "\b\b\b\b\b\b\b\b\b\b\b18401132402\r" }
+# }
+# expect "Password:" { send "spirit-ai\r" }
+# expect eof
+# EOF
+
+# oss ls -s -d oss://likaiyu
+# oss cp $TASK.zip oss://likaiyu/weights/
+# cd /root/PI_Official
