@@ -25,21 +25,16 @@ _OPENPI_DATA_HOME = "OPENPI_DATA_HOME"
 
 logger = logging.getLogger(__name__)
 
-
 def get_cache_dir() -> pathlib.Path:
     default_dir = "~/.cache/openpi"
-    if os.path.exists("/pfstem/likaiyu/resources"):
-        default_dir = "/pfstem/likaiyu/resources"
+    if os.path.exists("/PFS/output/openai/cache"):
+        default_dir = "/PFS/output/openai/cache"
         print("OH YEAH")
-    default_dir = "/pfstem/likaiyu/resources"
-    if os.path.exists("/mnt/weka"):  # noqa: PTH110
-        default_dir = f"/mnt/weka/{getpass.getuser()}/.cache/openpi"
 
     cache_dir = pathlib.Path(os.getenv(_OPENPI_DATA_HOME, default_dir)).expanduser().resolve()
     cache_dir.mkdir(parents=True, exist_ok=True)
     _set_folder_permission(cache_dir)
     return cache_dir
-
 
 def maybe_download(url: str, *, force_download: bool = False, **kwargs) -> pathlib.Path:
     """Download a file or directory from a remote filesystem to the local cache, and return the local path.
