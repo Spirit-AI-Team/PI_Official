@@ -141,10 +141,24 @@ def train_step(
     config: _config.TrainConfig,
     rng: at.KeyArrayLike,
     state: training_utils.TrainState,
-    batch: tuple[_model.Observation, _model.Actions],
+    batch: tuple[_model.Observation, _model.Actions, _model.ActionsIsPad],
 ) -> tuple[training_utils.TrainState, dict[str, at.Array]]:
     model = nnx.merge(state.model_def, state.params)
     model.train()
+
+    # @at.typecheck
+    # def loss_fn(
+    #     model: _model.BaseModel, rng: at.KeyArrayLike, observation: _model.Observation, actions: _model.Actions, actions_is_pad: _model.ActionsIsPad
+    # ):
+    #     chunked_loss = model.compute_loss(rng, observation, actions, train=True)
+    #     # Mask out padded actions from loss calculation
+    #     masked_loss = chunked_loss * jnp.expand_dims(1 - actions_is_pad, axis=-1)
+    #     # Calculate mean only over non-padded actions
+    #     denom = jnp.sum(1 - actions_is_pad)
+    #     mean_loss = jnp.sum(masked_loss) / jnp.maximum(denom * chunked_loss.shape[-1], 1)
+    #     # For per-action losses, still take mean over batch and horizon
+    #     per_action_loss = jnp.sum(masked_loss, axis=[0, 1]) / jnp.maximum(denom, 1)
+    #     return mean_loss, per_action_loss
 
     @at.typecheck
     def loss_fn(
@@ -154,7 +168,7 @@ def train_step(
         return jnp.mean(chunked_loss), jnp.mean(chunked_loss, axis=[0, 1])
 
     train_rng = jax.random.fold_in(rng, state.step)
-    observation, actions = batch
+    observation, actions, actions_is_pad = batch
 
     # Filter out frozen params.
     diff_state = nnx.DiffState(0, config.trainable_filter)

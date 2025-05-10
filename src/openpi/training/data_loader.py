@@ -53,14 +53,15 @@ class TransformedDataset(Dataset[T_co]):
 
     def __getitem__(self, index: SupportsIndex) -> T_co:
         res = self._transform(self._dataset[index])
-        # if 'observation.state' in res:
-        #     res['observation.state'][:7] *= 0
-        #     # res['observation.state'][13] *= 0
-        # elif 'state' in res:
-        #     res['state'][:7] *= 0
-        #     # res['state'][13] *= 0
+        if 'observation.state' in res:
+            res['observation.state'][:7] *= 0
+            # res['observation.state'][13] *= 0
+        elif 'state' in res:
+            res['state'][:7] *= 0
+            # res['state'][13] *= 0
 
-        # res['actions'][..., :7] *= 0
+        res['actions'][..., :6] *= 0
+        res['actions'][..., 6] = 0.06
         return res
         # return self._transform(self._dataset[index])
 
@@ -255,7 +256,7 @@ def create_multi_data_loader(
 
         def __iter__(self):
             for batch in self._data_loader:
-                yield _model.Observation.from_dict(batch), batch["actions"]
+                yield _model.Observation.from_dict(batch), batch["actions"], batch["actions_is_pad"]
 
     return DataLoaderImpl(data_config, data_loader)
 
@@ -327,6 +328,7 @@ class TorchDataLoader:
             # Use data parallel sharding by default.
             sharding = jax.sharding.NamedSharding(
                 jax.sharding.Mesh(jax.devices(), ("B",)),
+                # jax.sharding.PartitionSpec(None),
                 jax.sharding.PartitionSpec("B"),
             )
 
