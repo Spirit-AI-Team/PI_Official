@@ -12,7 +12,7 @@ import ffmpeg
 from pathlib import Path
 
 # set the LEROBOT_HOME and REPO_NAME to the dataset you need.
-REPO_NAME = "MultiTask_PutStickOnTissue_2missions_0429"
+REPO_NAME = "YC_MultiTask_PutPlateOnRack_0510_11"
 
 def vidwrite(filename, images, framerate=10, vcodec='libx264'):
     """

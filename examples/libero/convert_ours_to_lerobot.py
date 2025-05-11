@@ -41,7 +41,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
 FPS = 30
-REPO_NAME = "HRPI_MultiTask_PutEggInEggrack_0429_06"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "YC_MultiTask_PutPlateOnRack_0510_11"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -76,30 +76,14 @@ EEF_MAPPING = {
      "actions":['robot0_eef_pos', 'robot0_eef_rot_axis_angle', 'robot0_gripper_width', 'robot1_eef_pos', 'robot1_eef_rot_axis_angle', 'robot1_gripper_width'],
 }
 
+device = '_Y_M1'#'HRPI' '_Y_AL' '_Y_M1'
 dataset_paths = [
-                    # '/mnt/pfs-chihiro/20250409',
-                    # '/mnt/pfs-chihiro/20250410',
-                    # '/mnt/pfs-chihiro/20250411',
-                    # '/mnt/pfs-chihiro/20250414',
-                    # '/mnt/pfs-chihiro/20250415',
-                    # '/mnt/pfs-chihiro/20250416',
-                    # '/mnt/pfs-chihiro/20250417',
-                    # '/mnt/pfs-chihiro/20250418',
-                    # '/mnt/pfs-chihiro/20250419',
-                    # '/mnt/pfs-chihiro/20250421',
-                    # '/mnt/pfs-chihiro/20250422',
-                    # '/mnt/pfs-chihiro/20250423',
-                    # '/mnt/pfs-chihiro/20250424',
-                    # '/mnt/pfs-chihiro/20250425',
-                    # '/mnt/pfs-chihiro/20250427',
-                    # '/mnt/pfs-chihiro/20250428',
-                    '/mnt/pfs-chihiro/20250429',
-                    '/mnt/pfs-chihiro/20250430',
-                    '/mnt/pfs-chihiro/20250506',
+                    '/mnt/pfs-chihiro/20250509',
+                    '/mnt/pfs-chihiro/20250510'
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
-    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if 'HRPI' in p]
+    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if device in p]
 
 BLACK_LIST = set([
     '20250422_Y_AL05_PICKPLACE_AUG01_PutBottleInOrganizer_FMS',
@@ -121,14 +105,14 @@ for p in dataset_files:
         print(f'Find {os.path.basename(p)} in black list, remove the path')
         continue
 
-    if 'PutEggInEggrack' in p or 'PutEgglnEggrack' in p:
-        DATASET_TASK[p] = 'There is an egg and an egg tray on the table. Locate the egg, pick up the egg, and place the egg onto the egg tray.'
+    # if 'PutEggInEggrack' in p or 'PutEgglnEggrack' in p:
+        # DATASET_TASK[p] = 'There is an egg and an egg tray on the table. Locate the egg, pick up the egg, and place the egg onto the egg tray.'
     # if 'PutToyInOrganizer' in p:
     #     DATASET_TASK[p] = 'There is a toy and an organizer on the table. Locate the toy, pick up the toy, and place the toy into the organizer.'
     # if 'PutTissueInOrganizer' in p:
     #     DATASET_TASK[p] = 'There is a tissue and an organizer on the table. Locate the tissue, pick up the tissue, and place the tissue into the organizer.'
-    # if 'PutPlateOnRack' in p:
-    #     DATASET_TASK[p] = 'There is a plate and a dish drainer on the table. Locate the plate, pick up the plate, and place the plate onto the dish drainer.'
+    if 'PutPlateOnRack' in p:
+        DATASET_TASK[p] = 'There is a plate and a dish drainer on the table. Locate the plate, pick up the plate, and place the plate onto the dish drainer.'
     # if 'PutAnimalInOrganizer' in p:
     #     DATASET_TASK[p] = 'There is an animal and an organizer on the table. Locate the animal, pick up the animal, and place the animal into the organizer.'
     # if 'PutCanInOrganizer' in p:
