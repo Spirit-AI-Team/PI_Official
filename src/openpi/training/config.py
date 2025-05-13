@@ -638,12 +638,12 @@ _CONFIGS = [
         name="spi0_aloha_eef_multi_full2",
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
-        sample_weights_cfg = "/root/PI_Official/data/lerobot/HRPI_MultiTask_PutPlateOnRack_0423_29/sample1.json",
+        sample_weights_cfg = "/root/PI_Official/data/lerobot/YC_MultiTask_PutPlateOnRack_0512/sample1.json",
         data=LeRobotAlohaDataConfig(
-            repo_id=["HRPI_MultiTask_PutPlateOnRack_0423_29"],
+            repo_id=["YC_MultiTask_PutPlateOnRack_0510_11","YC_MultiTask_PutPlateOnRack_0512"],
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_multi_full2",
-                asset_id=["HRPI_MultiTask_PutPlateOnRack_0423_29"],
+                asset_id=["YC_MultiTask_PutPlateOnRack_0510_11","YC_MultiTask_PutPlateOnRack_0512"],
             ),
             adapt_to_pi=False,
             # interp_rate=3,
