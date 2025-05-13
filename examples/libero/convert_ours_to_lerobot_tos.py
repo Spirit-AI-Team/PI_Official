@@ -37,7 +37,8 @@ import json
 import tos
 import io
 
-
+import multiprocessing
+from concurrent.futures import ThreadPoolExecutor, as_completed  
 
 '''
 uv run examples/libero/convert_ours_to_lerobot.py --data-dir /hy-tmp/lmz/pi0_data/example --create-from-scratch
@@ -47,7 +48,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
 FPS = 30
-REPO_NAME = "HRPI_PutObjectlnDrawer_0509_test"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "HRPI_PutObjectlnDrawer_0510"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -89,6 +90,44 @@ def load_hdf5_file(client: tos.TosClientV2, bucket_name: str, object: str) -> h5
 def load_file(client: tos.TosClientV2, bucket_name: str, object: str) -> bytes:
     response = client.get_object(bucket_name, object)
     return response.content.read()
+
+def process_hdf5_file(args):  
+    raw_dataset_name, task_instruction, client, bucket_name, mapping, validities = args  
+    file_idx = int(os.path.basename(raw_dataset_name).split('.')[0])  
+    
+    if not validities.get(file_idx, False):  
+        print(f'{raw_dataset_name} not valid')  
+        return None  
+
+    # 从远程加载 HDF5 文件  
+    hdf5_file = load_file(client, bucket_name, raw_dataset_name)  
+    value_dict = {  
+        "observation.images.cam_high": None,  
+        "observation.images.cam_left_wrist": None,   
+        "observation.images.cam_right_wrist": None,  
+        "observation.state": None,  
+        "actions": None  
+    }  
+
+    with h5py.File(io.BytesIO(hdf5_file), "r") as ep:  
+        for key in value_dict.keys():  
+            if isinstance(mapping[key], list):  
+                v = [torch.from_numpy(np.array(ep[each_key])) for each_key in mapping[key]]  
+                value_dict[key] = torch.cat(v, dim=1)  
+                if mapping == JOINT_MAPPING:  
+                    value_dict[key] = value_dict[key][..., 2:16]  
+            else:  
+                value_dict[key] = torch.from_numpy(np.array(ep[mapping[key]]))  
+
+        # 归一化手指的值  
+        for key in ['observation.state', 'actions']:  
+            for gripper_pos in [LEFT_GRIPPER, RIGHT_GRIPPER]:  
+                gripper = value_dict[key][..., gripper_pos:gripper_pos + 1]  
+                min_value = torch.min(gripper, dim=0, keepdim=True)[0]  
+                normed_value = gripper - min_value  
+                value_dict[key][..., gripper_pos:gripper_pos + 1] = normed_value  
+
+    return value_dict, task_instruction 
 
 def main(data_dir: str = '', *, 
          push_to_hub: bool = False, 
@@ -182,132 +221,87 @@ def main(data_dir: str = '', *,
         # '20250507/20250507_Z_HRPI03_MULTI_PullOutDrawer_LJM/',   # 加后面的/避免相同的结果
         # '20250507/20250507_Z_HRPI03_MULTI_PullOutDrawer_LJM01/',
         # '20250507/20250507_Z_HRPI02_MULTI_PullOutDrawer_CH01/',
-        '20250509/20250509_Z_HRPI01_MULTI_PutObjectInDrawer_LJ/',
-        '20250509/20250509_Z_HRPI02_MULTI_PutObjectInDrawer_LJ/',
-        '20250509/20250509_Z_HRPI03_MULTI_PutObjectInDrawer_LTJ/',
-        '20250509/20250509_Z_HRPI04_MULTI_PutObjectlnDrawer_WJY/',
+        # '20250509/20250509_Z_HRPI01_MULTI_PutObjectInDrawer_LJ/',
+        # '20250509/20250509_Z_HRPI02_MULTI_PutObjectInDrawer_LJ/',
+        # '20250509/20250509_Z_HRPI03_MULTI_PutObjectInDrawer_LTJ/',
+        # '20250509/20250509_Z_HRPI04_MULTI_PutObjectlnDrawer_WJY/',
+        '20250510/20250510_Z_HRPI01_MULTI_PutObjectInDrawer_LIJIA/',
+        '20250510/20250510_Z_HRPI03_MULTI_PutObjectInDrawer_LTJ/',
+        '20250510/20250510_Z_HRPI01_MULTI_PutObjectInDrawer_LIJIA01/',
+        '20250510/20250510_Z_HRPI04_MULTI_PutObjectlnDrawer_CH/',
+        '20250510/20250510_Z_HRPI02_MULTI_PutObjectInDrawer_LJ01/',
+        '20250510/20250510_Z_HRPI04_MULTI_PutObjectlnDrawer_CH01/',
     ]
 
-    for dataset_path in dataset_paths:
-        list_response = client.list_objects_type2(bucket_name, prefix=dataset_path)
-        hdf5_files = []
-        other_files = []
-        for obj in list_response.contents:
-            name = os.path.basename(obj.key)
-            if name.endswith(".hdf5"):
-                hdf5_files.append(obj.key)
-            else:
-                other_files.append(obj.key)
+    for dataset_path in dataset_paths:  
+        list_response = client.list_objects_type2(bucket_name, prefix=dataset_path)  
+        hdf5_files = []  
+        other_files = []  
 
-        DATASET_TASK = {}
-        for p in hdf5_files:
-            if 'action1' in p:
-                DATASET_TASK[p] = 'action1:place the cup on the coffee machine'
-            elif 'action2' in p:
-                DATASET_TASK[p] = 'action2:Click the espresso button to making the coffee'
-            elif 'action3' in p:
-                DATASET_TASK[p] = 'action3:Take the cup off the coffee machine and place it on the table'
-            elif 'StackCup1To3' in p:
-                DATASET_TASK[p] = 'Stack the cups from one to three.'
-            # elif 'StackCup1To3_AUG02' in p:
-            # elif 'AUG01' in p:
-            #     DATASET_TASK[p] = 'Stack the cups from one to three. Step two: put the second cup near the first cup.'
-            # elif 'AUG02' in p:
-            #     DATASET_TASK[p] = 'Stack the cups from one to three. Step three: put the third cup near the first and second cup to make them form a triangle.'
-            elif 'PickUpCup' in p:
-                DATASET_TASK[p] = 'Start by positioning the cup correctly, then secure it with a clamp.'
-            elif 'PickUpCup2' in p:
-                DATASET_TASK[p] = 'Pick up the fallen cup and place it back in an upright position.'
-            elif 'PullOutDrawer' in p:
-                DATASET_TASK[p] = 'Pull out the drawer and take out all the objects inside.'
-            elif 'PutObjectlnDrawer' in p:
-                DATASET_TASK[p] = 'Put the object in the drawer.'
-            else:
-                DATASET_TASK[p] = 'Rip off last piece of tissue from the toilet roll, then use the sticker to seal the toilet roll.'
+        for obj in list_response.contents:  
+            name = os.path.basename(obj.key)  
+            if name.endswith(".hdf5"):  
+                hdf5_files.append(obj.key)  
+            else:  
+                other_files.append(obj.key)  
 
-        info_path = os.path.join(dataset_path, 'info.json')
-        assert info_path in other_files, f"Error: {info_path} not found in other_files." 
+        DATASET_TASK = {}  
+        for p in hdf5_files:  
+            if 'action1' in p:  
+                DATASET_TASK[p] = 'action1:place the cup on the coffee machine'  
+            elif 'action2' in p:  
+                DATASET_TASK[p] = 'action2:Click the espresso button to making the coffee'  
+            elif 'action3' in p:  
+                DATASET_TASK[p] = 'action3:Take the cup off the coffee machine and place it on the table'  
+            elif 'StackCup1To3' in p:  
+                DATASET_TASK[p] = 'Stack the cups from one to three.'  
+            elif 'PickUpCup' in p:  
+                DATASET_TASK[p] = 'Start by positioning the cup correctly, then secure it with a clamp.'  
+            elif 'PickUpCup2' in p:  
+                DATASET_TASK[p] = 'Pick up the fallen cup and place it back in an upright position.'  
+            elif 'PullOutDrawer' in p:  
+                DATASET_TASK[p] = 'Pull out the drawer and take out all the objects inside.'  
+            elif 'PutObjectInDrawer' in p:  
+                DATASET_TASK[p] = 'Put the object in the drawer.'  
+            else:  
+                DATASET_TASK[p] = 'Rip off last piece of tissue from the toilet roll, then use the sticker to seal the toilet roll.'  
+
+        info_path = os.path.join(dataset_path, 'info.json')  
+        assert info_path in other_files, f"Error: {info_path} not found in other_files."  
+
+        info_data = json.loads(load_file(client, bucket_name, info_path))  
+        validities = {dataset_item['ID']: dataset_item['validity'] for dataset_item in info_data['datasets']}  
+
+        if len(hdf5_files) != len(validities):  
+            print(f'len(hdf5_files): {len(hdf5_files)} != len(validities.keys()) {len(validities)}')  
+            continue  
         
-        info_data = json.loads(load_file(client, bucket_name, info_path)) 
-        validities = {}
-        for dataset_item in info_data['datasets']:
-            key = dataset_item['ID']
-            value = dataset_item['validity']
-            validities[key] = value
+        # 准备并行处理参数  
+        process_args = [  
+            (raw_dataset_name, task_instruction, client, bucket_name, mapping, validities)  
+            for raw_dataset_name, task_instruction in DATASET_TASK.items()  
+        ]  
 
-        if len(hdf5_files) != len(validities.keys()):
-            print(f'len(hdf5_files): {len(hdf5_files)} != len(validities.keys()) {len(validities.keys())}')
-            continue
+        # Use ThreadPoolExecutor for parallel processing
+        num_workers = min(multiprocessing.cpu_count(), 10)  # Choose appropriate number of threads
 
-        for raw_dataset_name, task_instruction in tqdm.tqdm(DATASET_TASK.items()):
-            file_idx = int (os.path.basename(raw_dataset_name).split('.')[0])
-            # if file_idx in fail_list:
-            #     continue
-            
-            assert file_idx in validities.keys()
-            
-            if not validities[file_idx]:
-                print (f'{raw_dataset_name} not valid')
-                continue
-            
-            hdf5_file = load_file(client, bucket_name, raw_dataset_name)
-            value_dict = {"observation.images.cam_high": None, "observation.images.cam_left_wrist": None, "observation.images.cam_right_wrist": None, "observation.state": None, "actions": None}
-            with h5py.File(io.BytesIO(hdf5_file), "r") as ep:
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = {executor.submit(process_hdf5_file, args): args[1] for args in process_args}
 
-                for i, (key, item) in enumerate(value_dict.items()):
-                    if type(mapping[key]) == list:
-                        v = []
-                        for each_key in mapping[key]:
-                            # print(each_key, ep[each_key].shape, type(ep[each_key]))
-                            v.append(torch.from_numpy(np.array(ep[each_key])))
-                        v = torch.cat(v, dim=1)
-                        if mapping == JOINT_MAPPING:
-                            v = v[..., 2:16]
-                        value_dict[key] = v
-                    else:
-                        value_dict[key] = torch.from_numpy(np.array(ep[mapping[key]]))
-
-                ### norm gripper
-                # import ipdb;ipdb.set_trace()
-                gripper = value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1]
-                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
-                normed_value = gripper - min_value
-                # normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6)
-                value_dict['observation.state'][..., LEFT_GRIPPER:LEFT_GRIPPER+1] = normed_value #* 5.
-                gripper = value_dict['observation.state'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1]
-                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
-                normed_value = gripper - min_value
-                # normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6) 
-                value_dict['observation.state'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1] = normed_value #* 5.
-
-                gripper = value_dict['actions'][..., LEFT_GRIPPER:LEFT_GRIPPER+1]
-                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
-                normed_value = gripper - min_value
-                # normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6)
-                value_dict['actions'][..., LEFT_GRIPPER:LEFT_GRIPPER+1] = normed_value #* 5.
-                gripper = value_dict['actions'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1]
-                min_value = torch.min(gripper, dim=0, keepdim=True)[0]
-                normed_value = gripper - min_value
-                # normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6) 
-                value_dict['actions'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1] = normed_value #* 5.
-
-                len_traj = value_dict["observation.state"].shape[0]
-                for i in range(len_traj):
-                    dataset.add_frame(
-                        {
-                            "observation.images.cam_high": value_dict['observation.images.cam_high'][i],
-                            "observation.images.cam_left_wrist": value_dict['observation.images.cam_left_wrist'][i],
-                            "observation.images.cam_right_wrist": value_dict['observation.images.cam_right_wrist'][i],
-                            "observation.state": value_dict['observation.state'][i],
-                            "actions": value_dict["actions"][i],
-                        }
-                    )
-                dataset.save_episode(task=task_instruction)
-        # except Exception as e:
-        #     log = open('/root/PI_Official/data/error.txt', 'w')  
-        #     log.write(f'{raw_dataset_name} does not have cmd eef\n')
-        #     log.close()
-        #     continue
+            for future in tqdm.tqdm(as_completed(futures), total=len(futures)):  
+                result = future.result()  
+                if result is not None:  
+                    value_dict, task_instruction = result  
+                    len_traj = value_dict["observation.state"].shape[0]  
+                    for i in range(len_traj):  
+                        dataset.add_frame({  
+                            "observation.images.cam_high": value_dict['observation.images.cam_high'][i],  
+                            "observation.images.cam_left_wrist": value_dict['observation.images.cam_left_wrist'][i],  
+                            "observation.images.cam_right_wrist": value_dict['observation.images.cam_right_wrist'][i],  
+                            "observation.state": value_dict['observation.state'][i],  
+                            "actions": value_dict["actions"][i],  
+                        })  
+                    dataset.save_episode(task=task_instruction) 
 
     # Consolidate the dataset, skip computing stats since we will do that later
     dataset.consolidate(run_compute_stats=False, keep_image_files = False)
