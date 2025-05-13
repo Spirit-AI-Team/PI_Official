@@ -55,9 +55,13 @@ class TransformedDataset(Dataset[T_co]):
         res = self._transform(self._dataset[index])
         if 'observation.state' in res:
             res['observation.state'][:7] *= 0
+            # res['observation.state'][9] += np.random.uniform(-0.03, 0.03)  # Add uniform noise between 0-3
+            res['observation.state'][9] += np.random.normal(0, 0.02) 
             # res['observation.state'][13] *= 0
         elif 'state' in res:
             res['state'][:7] *= 0
+            # res['state'][9] += np.random.uniform(-0.03, 0.03)  # Add uniform noise between 0-3
+            res['state'][9] += np.random.normal(0, 0.02) 
             # res['state'][13] *= 0
 
         res['actions'][..., :6] *= 0
