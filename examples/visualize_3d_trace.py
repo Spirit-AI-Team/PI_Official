@@ -221,14 +221,12 @@ def eval_main(cfg: EvalPipelineConfig):
             ax.plot(right_wrist[:, 0], right_wrist[:, 1], right_wrist[:, 2], color='green')
 
             all_actions.append(action_res)
-
-
         # # Convert to CPU / numpy.
         # action = action.to("cpu").numpy()
         # assert action.ndim == 2, "Action dimensions should be (batch, action_dim)"
 
     # plt.savefig("train_episode_0_lerobotpi0_ft32.png")
-    plt.savefig("/root/PI_Official/examples/demo.png")
+    plt.savefig(f"/root/PI_Official/examples/{cfg.dataset.repo_id}.png")
     # plt.savefig("episode_0_officialpi0_ft32.png")
 
     # print (f'loss: {np.mean(np.array(res))}')

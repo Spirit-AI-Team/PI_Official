@@ -41,7 +41,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
 FPS = 30
-REPO_NAME = "HRPI_PutPlateOnRack_Rjoints_0422_23"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "YC_PutPlateOnRack_Rjoints_0516"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -76,7 +76,7 @@ EEF_MAPPING = {
      "actions":['robot0_eef_pos', 'robot0_eef_rot_axis_angle', 'robot0_gripper_width', 'robot1_eef_pos', 'robot1_eef_rot_axis_angle', 'robot1_gripper_width'],
 }
 ROBOT_TYPE = 'moz1'
-
+device = '_Y_M1'#'HRPI' '_Y_AL' '_Y_M1'
 dataset_paths = [
                     # '/mnt/pfs-chihiro/20250306',
                     # '/mnt/pfs-chihiro/20250402',
@@ -87,39 +87,34 @@ dataset_paths = [
                     # '/mnt/pfs-chihiro/20250415',
                     # '/mnt/pfs-chihiro/20250416',
                     # '/mnt/pfs-chihiro/20250417',
-                    '/mnt/pfs-chihiro/20250422',
-                    '/mnt/pfs-chihiro/20250423',
+                    '/mnt/pfs-chihiro/20250509',
+                    '/mnt/pfs-chihiro/20250510',
+                    '/mnt/pfs-chihiro/20250512',
+                    '/mnt/pfs-chihiro/20250513',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
-    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path)]#if 'HF' in p]
+    dataset_files += [os.path.join(dataset_path, p) for p in os.listdir(dataset_path) if device in p]
 
 DATASET_TASK = {}
 for p in dataset_files:
-    # if 'STEP01AUG06' in p:
-        # DATASET_TASK[p] = "Flatten the shirt"
-        # DATASET_TASK[p] = 'Flatten the shirt: pick a shirt from the basket, put it on the table and then flatten the shirt and make it horizontal to your side of table'
-    # if 'PI0STACK_HF' in p:
-    #     # DATASET_TASK[p] = "Fold up again and stack the shirt to the corner"
-        # DATASET_TASK[p] = 'Stack the shirt: fold up the shirt again and stack the shirt to the corner'
-    # if '15QUICK_HF' in p:
-    #     # DATASET_TASK[p] = "Fold the shirt"
-        #  DATASET_TASK[p] = "Fold the shirt: fold up once on both sides of the shirt, then rotate the shirt to vertical state, and finally fold the bottom part to the top"
-#dish drainer, egg tray
-    if 'PutEggInEggrack' in p:
-        DATASET_TASK[p] = 'There is an egg and an egg tray on the table. Locate the egg, pick up the egg, and place the egg onto the egg tray.'
-    if 'PutToyInOrganizer' in p:
-        DATASET_TASK[p] = 'There is a toy and an organizer on the table. Locate the toy, pick up the toy, and place the toy into the organizer.'
-    if 'PutTissueInOrganizer' in p:
-        DATASET_TASK[p] = 'There is a tissue and an organizer on the table. Locate the tissue, pick up the tissue, and place the tissue into the organizer.'
+
     if 'PutPlateOnRack' in p:
-        DATASET_TASK[p] = 'There is a plate and an dish drainer on the table. Locate the plate, pick up the plate, and place the plate onto the dish drainer.'
-    if 'PutAnimalInOrganizer' in p:
-        DATASET_TASK[p] = 'There is an animal and an organizer on the table. Locate the animal, pick up the animal, and place the animal into the organizer.'
-    if 'PutCanInOrganizer' in p:
-        DATASET_TASK[p] = 'There is a can and an organizer on the table. Locate the can, pick up the can, and place the can into the organizer.'
-    if 'PutPenInPenhold' in p:
-        DATASET_TASK[p] = 'There is a pen and an penhold on the table. Locate the pen, pick up the pen, and place the pen into the penhold.'
+        DATASET_TASK[p] = 'There is a plate and a dish drainer on the table. Locate the plate, pick up the plate, and place the plate onto the dish drainer.'
+    # if 'PutEggInEggrack' in p:
+    #     DATASET_TASK[p] = 'There is an egg and an egg tray on the table. Locate the egg, pick up the egg, and place the egg onto the egg tray.'
+    # if 'PutToyInOrganizer' in p:
+    #     DATASET_TASK[p] = 'There is a toy and an organizer on the table. Locate the toy, pick up the toy, and place the toy into the organizer.'
+    # if 'PutTissueInOrganizer' in p:
+    #     DATASET_TASK[p] = 'There is a tissue and an organizer on the table. Locate the tissue, pick up the tissue, and place the tissue into the organizer.'
+    # if 'PutPlateOnRack' in p:
+    #     DATASET_TASK[p] = 'There is a plate and an dish drainer on the table. Locate the plate, pick up the plate, and place the plate onto the dish drainer.'
+    # if 'PutAnimalInOrganizer' in p:
+    #     DATASET_TASK[p] = 'There is an animal and an organizer on the table. Locate the animal, pick up the animal, and place the animal into the organizer.'
+    # if 'PutCanInOrganizer' in p:
+    #     DATASET_TASK[p] = 'There is a can and an organizer on the table. Locate the can, pick up the can, and place the can into the organizer.'
+    # if 'PutPenInPenhold' in p:
+    #     DATASET_TASK[p] = 'There is a pen and an penhold on the table. Locate the pen, pick up the pen, and place the pen into the penhold.'
 
 # ipdb.set_trace()
 def main(data_dir: str = '', *, 
