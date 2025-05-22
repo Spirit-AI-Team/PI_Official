@@ -638,7 +638,7 @@ _CONFIGS = [
         name="spi0_aloha_eef_multi_full2",
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
-        sample_weights_cfg = "/root/PI_Official/data/lerobot/YC_MeetingRoom_PutPenInBox_0514/sample1.json",
+        sample_weights_cfg = "/root/PI_Official/data/lerobot/YC_MeetingRoom_3tasks_0514_21/sample1.json",
         data=LeRobotAlohaDataConfig(
             repo_id=["YC_MeetingRoom_3tasks_0514_21"],
             assets=AssetsConfig(
