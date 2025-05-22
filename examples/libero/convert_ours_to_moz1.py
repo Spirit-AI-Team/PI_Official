@@ -41,7 +41,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13 
 FPS = 30
-REPO_NAME = "YC_PutPlateOnRack_Rjoints_0516"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "YC_PutPenInBox_Rjoints_0514_15"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -87,10 +87,10 @@ dataset_paths = [
                     # '/mnt/pfs-chihiro/20250415',
                     # '/mnt/pfs-chihiro/20250416',
                     # '/mnt/pfs-chihiro/20250417',
-                    '/mnt/pfs-chihiro/20250509',
-                    '/mnt/pfs-chihiro/20250510',
-                    '/mnt/pfs-chihiro/20250512',
-                    '/mnt/pfs-chihiro/20250513',
+                    # '/mnt/pfs-chihiro/20250509',
+                    '/mnt/pfs-chihiro/20250514',
+                    '/mnt/pfs-chihiro/20250515',
+                    '/mnt/pfs-chihiro/20250516',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
@@ -99,7 +99,7 @@ for dataset_path in dataset_paths:
 DATASET_TASK = {}
 for p in dataset_files:
 
-    if 'PutPlateOnRack' in p:
+    if 'PutPenInBox' in p:
         DATASET_TASK[p] = 'There is a plate and a dish drainer on the table. Locate the plate, pick up the plate, and place the plate onto the dish drainer.'
     # if 'PutEggInEggrack' in p:
     #     DATASET_TASK[p] = 'There is an egg and an egg tray on the table. Locate the egg, pick up the egg, and place the egg onto the egg tray.'
@@ -194,6 +194,8 @@ def main(data_dir: str = '', *,
         # try:
         hdf5s_path = os.path.join(data_dir, raw_dataset_name)
         hdf5_file_names = glob.glob(os.path.join(raw_dataset_name, '*.hdf5'))
+        if not hdf5_file_names:
+            continue
         hdf5_file_names.sort(key = lambda x:int(x.split('/')[-1][:-5]))
         json_file = glob.glob(os.path.join(raw_dataset_name, 'info.json'))[0]
         with open(json_file, 'r') as f:

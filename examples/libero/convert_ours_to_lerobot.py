@@ -39,9 +39,9 @@ param:
 create-from-scratch: create lerobot dataset from scratch. this will Clean up any existing dataset in the output directory
 '''
 LEFT_GRIPPER = 6
-RIGHT_GRIPPER = 13 
+RIGHT_GRIPPER = 13
 FPS = 30
-REPO_NAME = "HRPI_MeetingRoom_PutPenInBox_0514_15"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "YC_MeetingRoom_3tasks_0514_21"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -76,14 +76,19 @@ EEF_MAPPING = {
      "actions":['robot0_eef_pos', 'robot0_eef_rot_axis_angle', 'robot0_gripper_width', 'robot1_eef_pos', 'robot1_eef_rot_axis_angle', 'robot1_gripper_width'],
 }
 
-device = 'HRPI'#'HRPI' '_Y_AL' '_Y_M1'
+device = '_Y_M1'#'HRPI' '_Y_AL' '_Y_M1'
 dataset_paths = [
                     # '/mnt/pfs-chihiro/20250509',
                     # '/mnt/pfs-chihiro/20250510'
                     # '/mnt/pfs-chihiro/20250512',
                     # '/mnt/pfs-chihiro/20250513',
                     '/mnt/pfs-chihiro/20250514',
-                    '/mnt/pfs-chihiro/20250515'
+                    '/mnt/pfs-chihiro/20250515',
+                    '/mnt/pfs-chihiro/20250516',
+                    '/mnt/pfs-chihiro/20250517',
+                    '/mnt/pfs-chihiro/20250519',
+                    '/mnt/pfs-chihiro/20250520',
+                    '/mnt/pfs-chihiro/20250521',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
@@ -110,6 +115,10 @@ for p in dataset_files:
         continue
     if 'PutPenInBox' in p:
         DATASET_TASK[p] = 'Pick up each mark pen on the table, and put it onto the first slot of the spirit-ai box.'
+    if 'PutRemoteControlInBox' in p:
+        DATASET_TASK[p] = 'Pick up every remote control on the table, and put it onto the first slot of the spirit-ai box.'
+    if 'PutTissueInTissueBox' in p:
+        DATASET_TASK[p] = 'Open spirit-ai box, if tissue inside needs to be replaced, take out the tissue and put in a new tissue.'
     # if 'PutEggInEggrack' in p or 'PutEgglnEggrack' in p:
         # DATASET_TASK[p] = 'There is an egg and an egg tray on the table. Locate the egg, pick up the egg, and place the egg onto the egg tray.'
     # if 'PutToyInOrganizer' in p:
@@ -220,6 +229,8 @@ def main(data_dir: str = '', *,
         if not hdf5_file_names:
             continue
         hdf5_file_names.sort(key = lambda x:int(x.split('/')[-1][:-5]))
+        if not glob.glob(os.path.join(raw_dataset_name, 'info.json')):
+            continue
         json_file = glob.glob(os.path.join(raw_dataset_name, 'info.json'))[0]
         with open(json_file, 'r') as f:
             content = json.load(f)
