@@ -41,7 +41,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13
 FPS = 30
-REPO_NAME = "YC_MeetingRoom_3tasks_0514_21"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "YC_MeetingRoom_PutPenInBox_0524"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -82,13 +82,14 @@ dataset_paths = [
                     # '/mnt/pfs-chihiro/20250510'
                     # '/mnt/pfs-chihiro/20250512',
                     # '/mnt/pfs-chihiro/20250513',
-                    '/mnt/pfs-chihiro/20250514',
-                    '/mnt/pfs-chihiro/20250515',
-                    '/mnt/pfs-chihiro/20250516',
-                    '/mnt/pfs-chihiro/20250517',
-                    '/mnt/pfs-chihiro/20250519',
-                    '/mnt/pfs-chihiro/20250520',
-                    '/mnt/pfs-chihiro/20250521',
+                    # '/mnt/pfs-chihiro/20250514',
+                    # '/mnt/pfs-chihiro/20250515',
+                    # '/mnt/pfs-chihiro/20250516',
+                    # '/mnt/pfs-chihiro/20250517',
+                    # '/mnt/pfs-chihiro/20250519',
+                    # '/mnt/pfs-chihiro/20250520',
+                    # '/mnt/pfs-chihiro/20250521',
+                    '/mnt/pfs-chihiro/20250524',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
@@ -105,6 +106,7 @@ BLACK_LIST = set([
     '20250414_Y_AL04_PICKPLACE_PutEggInEggrack_HZY01',
     '20250414_Y_AL04_PICKPLACE_PutEggInEggrack_HZY',
     '20250414_Y_AL05_PICKPLACE_PutEgglnEggrack_ZWS',
+    '20250524_Y_M107_MeetingRoom_PutPenlnBox_BGB_ZYD',
 ])
 
 DATASET_TASK = {}
@@ -279,6 +281,29 @@ def main(data_dir: str = '', *,
                 normed_value = gripper - min_value
                 # normed_value = normed_value / (torch.max(normed_value, dim=0, keepdim=True)[0]+1e-6) 
                 value_dict['actions'][..., RIGHT_GRIPPER:RIGHT_GRIPPER+1] = normed_value #* 5.
+                # import ipdb;ipdb.set_trace()
+                def preprocess_rotvec(points):
+                    if points.shape[0] <= 1:
+                        return points
+                    rot_vec = points[...,3:6]
+                    rot_vec = rot_vec.numpy()
+                    for i in range(1, points.shape[0]):
+                        if np.dot(rot_vec[i], rot_vec[i-1]) < 0:
+                            rot_vec[i] *= -1
+                            # print(f'norm is {np.sqrt(np.sum(rot_vec[i]**2))}')
+                    points[..., 3:6] = torch.tensor(rot_vec)
+
+                    rot_vec = points[...,10:13]
+                    rot_vec = rot_vec.numpy()
+                    for i in range(1, points.shape[0]):
+                        if np.dot(rot_vec[i], rot_vec[i-1]) < 0:
+                            rot_vec[i] *= -1
+                            # print(f'norm is {np.sqrt(np.sum(rot_vec[i]**2))}')
+                    points[..., 10:13] = torch.tensor(rot_vec)
+                    return points
+
+                value_dict['actions'] = preprocess_rotvec(value_dict['actions'])
+                value_dict['observation.state'] = preprocess_rotvec(value_dict['observation.state'])
 
                 len_traj = value_dict["observation.state"].shape[0]
                 for i in range(len_traj):

@@ -1,25 +1,25 @@
 CONFIG=spi0_aloha_eef_multi_full2
 # TASK=shirt_pretrains2_0225
 # TASK=FlattenShirt_EEF_0306_11_debug
-TASK=YC_MeetingRoom_3tasks_0514_21
-CKPT=59999
+TASK=YC_MeetingRoom_PutPenInBox_0524
+CKPT=29999
 
 cd /root/PI_Official
 source .venv/bin/activate
 export XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 #compute norm
-CUDA_VISIBLE_DEVICES=4 python scripts/compute_norm_stats_multi.py --config_name $CONFIG --max_frames 10000
+CUDA_VISIBLE_DEVICES=0 python scripts/compute_norm_stats_multi.py --config_name $CONFIG --max_frames 10000
 
 #train model
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python scripts/train.py $CONFIG --exp-name=$TASK --resume
+CUDA_VISIBLE_DEVICES=0,1,2,3 python scripts/train.py $CONFIG --exp-name=$TASK --resume
 
 cd /pfstem/likaiyu/mozbrain
-CUDA_VISIBLE_DEVICES=4 python lerobot/common/policies/pi0/conversion_scripts/convert_pi0_to_hf_lerobot.py \
+CUDA_VISIBLE_DEVICES=0 python lerobot/common/policies/pi0/conversion_scripts/convert_pi0_to_hf_lerobot.py \
     --checkpoint_dir /pfstem/likaiyu/mozbrain/data/checkpoints/$CONFIG/$TASK/$CKPT/params \
     --output_path /pfstem/likaiyu/mozbrain/data/lerobot_ckpts/$TASK
 
-CUDA_VISIBLE_DEVICES=4 python /pfstem/likaiyu/mozbrain/add_norm_stats_to_model.py \
+CUDA_VISIBLE_DEVICES=0 python /pfstem/likaiyu/mozbrain/add_norm_stats_to_model.py \
     --asset_path /pfstem/likaiyu/mozbrain/data/checkpoints/$CONFIG/$TASK/$CKPT/assets \
     --test_model_path /pfstem/likaiyu/mozbrain/data/lerobot_ckpts/$TASK \
     --action_dim 14

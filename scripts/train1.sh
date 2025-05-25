@@ -2,8 +2,8 @@ CONFIG=spi0_aloha_eef_multi_full
 # TASK=shirt_pretrains2_0225
 # TASK=FlattenShirt_EEF_0306_11_debug
 # TASK=MultiTask_6Objs_0331_03_pi0base
-TASK=Shirt_All_Aloha_0513
-CKPT=59999
+TASK=YC_MeetingRoom_PutPenInBox_0524_Fix
+CKPT=29999
 
 cd /root/PI_Official
 source .venv/bin/activate
@@ -11,10 +11,10 @@ export XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 # export HF_HOME=/pfstem/likaiyu/resources/.cache/huggingface
 
 #compute norm
-CUDA_VISIBLE_DEVICES=0 python scripts/compute_norm_stats_multi.py --config_name $CONFIG --max_frames 20000
+CUDA_VISIBLE_DEVICES=4 python scripts/compute_norm_stats_multi.py --config_name $CONFIG --max_frames 20000
 
 #train model
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python scripts/train.py $CONFIG --exp-name=$TASK --resume
+CUDA_VISIBLE_DEVICES=4,5,6,7 python scripts/train.py $CONFIG --exp-name=$TASK --resume
 
 cd /pfstem/likaiyu/mozbrain
 python lerobot/common/policies/pi0/conversion_scripts/convert_pi0_to_hf_lerobot.py \

@@ -595,55 +595,12 @@ _CONFIGS = [
         name="spi0_aloha_eef_multi_full",
         model=pi0.Pi0Config(action_horizon=60),
         exp_name = 'test',
-        sample_weights_cfg = "/root/PI_Official/data/lerobot/Aloha_shirt/ALLShirt_EEF_0307_19/sample_0513.json",
+        sample_weights_cfg = "/root/PI_Official/data/lerobot/YC_MeetingRoom_PutPenInBox_0524/sample1.json",
         data=LeRobotAlohaDataConfig(
-            repo_id=["Aloha_shirt/ALLShirt_EEF_0307_19","Aloha_shirt/ALLShirt_EEF_Gripper_Scene1_0325_26","Aloha_shirt/FlattenShirt_EEF_Gripper_AUG05","Aloha_shirt/FlattenShirt_EEF_Gripper_AUG06"],
+            repo_id=["YC_MeetingRoom_PutPenInBox_0524_Fix"],
             assets=AssetsConfig(
                 assets_dir="assets/spi0_aloha_eef_multi_full",
-                asset_id=["Aloha_shirt/ALLShirt_EEF_0307_19","Aloha_shirt/ALLShirt_EEF_Gripper_Scene1_0325_26","Aloha_shirt/FlattenShirt_EEF_Gripper_AUG05","Aloha_shirt/FlattenShirt_EEF_Gripper_AUG06"],
-            ),
-            adapt_to_pi=False,
-            # interp_rate=3,
-            repack_transforms=_transforms.Group(
-                inputs=[
-                    _transforms.RepackTransform(
-                        {
-                            "images": {
-                                "cam_high": "observation.images.cam_high",
-                                "cam_left_wrist": "observation.images.cam_left_wrist",
-                                "cam_right_wrist": "observation.images.cam_right_wrist",
-                            },
-                            "state": "observation.state",
-                            "actions": "actions",
-                            "prompt": "prompt",
-                        }
-                    )
-                ]
-            ),
-            base_config=DataConfig(
-                local_files_only=True,  # Set to True for local-only datasets.
-                prompt_from_task=True,
-            ),
-        ),
-        batch_size=256,
-        num_workers=16,
-        keep_period = 5000,
-        fsdp_devices=8,
-        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
-        num_train_steps=60_000,
-        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=120_000),
-        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
-    ),
-    TrainConfig(
-        name="spi0_aloha_eef_multi_full2",
-        model=pi0.Pi0Config(action_horizon=60),
-        exp_name = 'test',
-        sample_weights_cfg = "/root/PI_Official/data/lerobot/YC_MeetingRoom_3tasks_0514_21/sample1.json",
-        data=LeRobotAlohaDataConfig(
-            repo_id=["YC_MeetingRoom_3tasks_0514_21"],
-            assets=AssetsConfig(
-                assets_dir="assets/spi0_aloha_eef_multi_full2",
-                asset_id=["YC_MeetingRoom_3tasks_0514_21"],
+                asset_id=["YC_MeetingRoom_PutPenInBox_0524_Fix"],
             ),
             adapt_to_pi=False,
             # interp_rate=3,
@@ -669,12 +626,55 @@ _CONFIGS = [
             ),
         ),
         batch_size=64,
-        num_workers=16,
+        num_workers=12,
         keep_period = 5000,
-        fsdp_devices=8,
+        fsdp_devices=4,
         weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
-        num_train_steps=60_000,
-        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=60_000),
+        num_train_steps=30_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
+    ),
+    TrainConfig(
+        name="spi0_aloha_eef_multi_full2",
+        model=pi0.Pi0Config(action_horizon=60),
+        exp_name = 'test',
+        sample_weights_cfg = "/root/PI_Official/data/lerobot/YC_MeetingRoom_PutPenInBox_0524/sample1.json",
+        data=LeRobotAlohaDataConfig(
+            repo_id=["YC_MeetingRoom_PutPenInBox_0524"],
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_aloha_eef_multi_full2",
+                asset_id=["YC_MeetingRoom_PutPenInBox_0524"],
+            ),
+            adapt_to_pi=False,
+            # interp_rate=3,
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            "prompt": "prompt",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        batch_size=64,
+        num_workers=12,
+        keep_period = 5000,
+        fsdp_devices=4,
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        num_train_steps=30_000,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
         checkpoint_base_dir="/pfstem/likaiyu/resources/checkpoints",
     ),
     TrainConfig(
