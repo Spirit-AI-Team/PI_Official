@@ -12,7 +12,7 @@ import ffmpeg
 from pathlib import Path
 
 # set the LEROBOT_HOME and REPO_NAME to the dataset you need.
-REPO_NAME = "YC_MeetingRoom_PutPenInBox_0514_15_Fix"
+REPO_NAME = "YC_MeetingRoom_PutPenInBox_0524_Fix"
 
 def vidwrite(filename, images, framerate=10, vcodec='libx264'):
     """
@@ -66,7 +66,7 @@ def put_chinese_text(img, text, position, font_path='assets/SimHei.ttf', font_si
     img_np = np.array(img_pil)
     return img_np
     
-def main(num_episodes_to_visualize=20, episodes_idx_to_visualize = None):
+def main(num_episodes_to_visualize=20, episodes_idx_to_visualize = [5,10,15,99]):
     # set the LEROBOT_HOME and REPO_NAME to the dataset you need.
     # LEROBOT_HOME = Path('/pfstem/wenxuan/resources/lerobot_15steps')
     dataset = LeRobotDataset(root=LEROBOT_HOME / REPO_NAME, repo_id=REPO_NAME, local_files_only=True)

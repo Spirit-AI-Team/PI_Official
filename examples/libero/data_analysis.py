@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from random import sample 
 # !export XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
+
+#XY平面分布
 def plot_robot_xyplane_stats(action_points, state_points, save_name):
     points_np = action_points.numpy()[...,:2]
     points_np2 = state_points.numpy()[...,:2]
@@ -39,7 +41,7 @@ def plot_robot_xyplane_stats(action_points, state_points, save_name):
     plt.savefig(f'/root/PI_Official/data/visualization/XYPlane/{save_name}.png', dpi=300, bbox_inches='tight')
     plt.show()
     
-
+#XYZ分布
 def plot_singledim_stats(action_points, state_points, save_name):
     points_np = action_points.numpy()
     points_np2 = state_points.numpy()
@@ -75,6 +77,7 @@ def cal_cmd_state_diff(action_points, state_points):
     diff = action_points - state_points
     return np.sqrt(np.sum(diff*diff, axis=1)).mean()
 
+#臂角限制
 def plot_angle_limit_violation(state_points, save_name, threshold = 5, sample_num = 10_000):
     left_angle_limit = [
     [-180,60],[-180,3],[-175,175],[-129,90],[-175,175],[-95,95],[-90,90]
@@ -103,6 +106,60 @@ def plot_angle_limit_violation(state_points, save_name, threshold = 5, sample_nu
     plt.savefig(f'/root/PI_Official/data/visualization/Joint_Limit/{save_name}.png', dpi=300, bbox_inches='tight')
     plt.show()
 
+# 按条数plot
+def plot_variant_comparison(action_points, state_points, title="Left Arm", save_name=None):
+    """
+    Plot comparison of two time-series variants over 7 dimensions.
+    
+    Args:
+        action_points (np.ndarray): Shape (t, 7), first variant.
+        state_points (np.ndarray): Shape (t, 7), second variant.
+        title (str): Overall title of the plot.
+        save_name (str or None): If provided, saves the figure to this path.
+    """
+    assert action_points.shape == state_points.shape, "Variants must have the same shape"
+    assert action_points.shape[1] == 7, "Each variant must have 7 dimensions"
+    axis_names = ['X','Y','Z','r','p','y','G']
+    max_frame = 900
+    action_points = action_points[:max_frame]
+    state_points = state_points[:max_frame]
+
+    t = action_points.shape[0]
+    time = np.arange(t)/30
+
+    fig, axes = plt.subplots(7, 1, figsize=(10, 12), sharex=True, dpi = 300)
+    fig.suptitle(title, fontsize=14)
+
+    for i in range(7):
+        axes[i].plot(time, action_points[:, i], 'b--o', markersize=2,
+               markerfacecolor='blue', markeredgecolor='black', markeredgewidth=0.5,
+               label='action', alpha=0.6)
+        axes[i].plot(time, state_points[:, i], 'r--o', markersize=2,
+               markerfacecolor='red', markeredgecolor='black', markeredgewidth=0.5,
+               label='state', alpha=0.6)
+        axes[i].set_ylabel(axis_names[i])
+        axes[i].grid(True)
+        if i == 0:
+            axes[i].legend(loc='upper right')
+
+    axes[-1].set_xlabel('Time Step(s)')
+    plt.tight_layout(rect=[0, 0, 1, 0.97])
+    
+    if save_name:
+        plt.savefig(f'/root/PI_Official/data/visualization/episode_demo/{save_name}.png', dpi=300, bbox_inches='tight')
+    plt.show()
+
+#解决rot vec突变
+def preprocess_rotvec(points):
+    assert points.shape[0] > 1
+    rot_vec = points[...,3:6]
+    rot_vec = rot_vec.numpy()
+    for i in range(1, points.shape[0]):
+        if np.dot(rot_vec[i], rot_vec[i-1]) < 0:
+            rot_vec[i] *= -1
+            print(f'norm is {np.sqrt(np.sum(rot_vec[i]**2))}')
+    points[..., 3:6] = torch.tensor(rot_vec)
+    return points
 
 if __name__ == "__main__":
     #加载数据集
@@ -127,3 +184,28 @@ if __name__ == "__main__":
     plot_angle_limit_violation(state_points, repo_id)
     # plot_robot_xyplane_stats(action_points, state_points, repo_id)
     # plot_singledim_stats(action_points, state_points, repo_id)
+
+    #按条数加载数据集
+    repo_id='YC_MeetingRoom_PutPenInBox_0514'
+    # repo_id = 'MultiTask_7task_0422'
+    # repo_id = 'HRPI_MultiTask_PutPlateOnRack_0423_29'
+    dataset = LeRobotDataset(repo_id, episodes = list(range(100)),local_files_only=True)
+    episode_id = 5
+    start,end = dataset.episode_data_index['from'][episode_id], dataset.episode_data_index['to'][episode_id]
+
+    l_action_points, r_action_points = [],[]
+    l_state_points, r_state_points = [],[]
+    for i in tqdm.tqdm(range(start,end)):
+        item = dataset[i]
+        l_action_points.append(item['actions'][:7])
+        r_action_points.append(item['actions'][7:])
+        l_state_points.append(item['observation.state'][:7])
+        r_state_points.append(item['observation.state'][7:])
+
+    l_action_points = torch.stack(l_action_points)
+    r_action_points = torch.stack(r_action_points)
+    l_state_points = torch.stack(l_state_points)
+    r_state_points = torch.stack(r_state_points)
+    l_action_points = preprocess_rotvec(l_action_points)
+    l_state_points = preprocess_rotvec(l_state_points)
+    plot_variant_comparison(l_action_points, l_state_points, save_name = repo_id + '_' + str(episode_id))

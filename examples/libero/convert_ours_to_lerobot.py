@@ -41,7 +41,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13
 FPS = 30
-REPO_NAME = "YC_MeetingRoom_PutPenInBox_0524"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "YC_MeetingRoom_PutPenInBox_0528"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -89,7 +89,7 @@ dataset_paths = [
                     # '/mnt/pfs-chihiro/20250519',
                     # '/mnt/pfs-chihiro/20250520',
                     # '/mnt/pfs-chihiro/20250521',
-                    '/mnt/pfs-chihiro/20250524',
+                    '/mnt/pfs-chihiro/20250528',
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
@@ -117,10 +117,10 @@ for p in dataset_files:
         continue
     if 'PutPenInBox' in p:
         DATASET_TASK[p] = 'Pick up each mark pen on the table, and put it onto the first slot of the spirit-ai box.'
-    if 'PutRemoteControlInBox' in p:
-        DATASET_TASK[p] = 'Pick up every remote control on the table, and put it onto the first slot of the spirit-ai box.'
-    if 'PutTissueInTissueBox' in p:
-        DATASET_TASK[p] = 'Open spirit-ai box, if tissue inside needs to be replaced, take out the tissue and put in a new tissue.'
+    # if 'PutRemoteControlInBox' in p:
+    #     DATASET_TASK[p] = 'Pick up every remote control on the table, and put it onto the first slot of the spirit-ai box.'
+    # if 'PutTissueInTissueBox' in p:
+    #     DATASET_TASK[p] = 'Open spirit-ai box, if tissue inside needs to be replaced, take out the tissue and put in a new tissue.'
     # if 'PutEggInEggrack' in p or 'PutEgglnEggrack' in p:
         # DATASET_TASK[p] = 'There is an egg and an egg tray on the table. Locate the egg, pick up the egg, and place the egg onto the egg tray.'
     # if 'PutToyInOrganizer' in p:
@@ -290,7 +290,8 @@ def main(data_dir: str = '', *,
                     for i in range(1, points.shape[0]):
                         if np.dot(rot_vec[i], rot_vec[i-1]) < 0:
                             rot_vec[i] *= -1
-                            # print(f'norm is {np.sqrt(np.sum(rot_vec[i]**2))}')
+                            norm = np.sqrt(np.sum(rot_vec[i]**2))
+                            rot_vec[i] = rot_vec[i] * (2*np.pi - norm)/norm
                     points[..., 3:6] = torch.tensor(rot_vec)
 
                     rot_vec = points[...,10:13]
@@ -298,7 +299,8 @@ def main(data_dir: str = '', *,
                     for i in range(1, points.shape[0]):
                         if np.dot(rot_vec[i], rot_vec[i-1]) < 0:
                             rot_vec[i] *= -1
-                            # print(f'norm is {np.sqrt(np.sum(rot_vec[i]**2))}')
+                            norm = np.sqrt(np.sum(rot_vec[i]**2))
+                            rot_vec[i] = rot_vec[i] * (2*np.pi - norm)/norm
                     points[..., 10:13] = torch.tensor(rot_vec)
                     return points
 
