@@ -41,7 +41,7 @@ create-from-scratch: create lerobot dataset from scratch. this will Clean up any
 LEFT_GRIPPER = 6
 RIGHT_GRIPPER = 13
 FPS = 30
-REPO_NAME = "YC_MeetingRoom_PutPenInBox_0528"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "YC_MeetingRoom_PutPenInBox_0530"#"ALLShirt_EEF_0307_19"  # Name of the output dataset, also used for the Hugging Face Hub
 #XDG_CACHE_HOME=/pfstem/likaiyu/resources/.cache
 
 JOINT_MAPPING = {
@@ -89,7 +89,8 @@ dataset_paths = [
                     # '/mnt/pfs-chihiro/20250519',
                     # '/mnt/pfs-chihiro/20250520',
                     # '/mnt/pfs-chihiro/20250521',
-                    '/mnt/pfs-chihiro/20250528',
+                    # '/mnt/pfs-chihiro/20250528',
+                    '/mnt/pfs-chihiro/20250530'
                 ]
 dataset_files = []
 for dataset_path in dataset_paths:
@@ -117,6 +118,8 @@ for p in dataset_files:
         continue
     if 'PutPenInBox' in p:
         DATASET_TASK[p] = 'Pick up each mark pen on the table, and put it onto the first slot of the spirit-ai box.'
+    if 'PutPenInFirstBox' in p:
+        DATASET_TASK[p] = 'Near Near Near Near Near Near'
     # if 'PutRemoteControlInBox' in p:
     #     DATASET_TASK[p] = 'Pick up every remote control on the table, and put it onto the first slot of the spirit-ai box.'
     # if 'PutTissueInTissueBox' in p:
