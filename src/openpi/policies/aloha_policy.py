@@ -100,6 +100,10 @@ class AlohaInputs(transforms.DataTransformFn):
 
         if "actions_is_pad" in data:
             inputs["actions_is_pad"] = data["actions_is_pad"]
+
+        if "progress" in data:
+            inputs["progress"] = data["progress"]
+
         return inputs
 
 

@@ -1,6 +1,10 @@
 from collections.abc import Callable, Mapping, Sequence
 import dataclasses
+import json
+import os
+import random
 import re
+from pathlib import Path
 from typing import Protocol, TypeAlias, TypeVar, runtime_checkable
 
 import flax.traverse_util as traverse_util
@@ -202,6 +206,7 @@ class DeltaActions(DataTransformFn):
     # See `make_bool_mask` for more details.
     mask: Sequence[bool] | None
     delta_base: str 
+    debug_prob: float = 0.1  # Probability of triggering debugger
 
     def __call__(self, data: DataDict) -> DataDict:
         if "actions" not in data or self.mask is None:
@@ -217,6 +222,15 @@ class DeltaActions(DataTransformFn):
         else:
             raise Exception('Invalid delta base!')
         data["actions"] = actions
+        
+        # HACK
+        # if np.random.random() < self.debug_prob and data['progress'] > 0.0:
+        #     data["actions"][:, :6] *= 0
+        #     data["actions"][:, 7:13] *= 0
+        #     if data['prompt'] == 'Fetch pink bottle.':
+        #         data['prompt'] = 'Fetch yellow bottle.'
+        #     elif data['prompt'] == 'Fetch yellow bottle.':
+        #         data['prompt'] = 'Fetch pink bottle.'
 
         return data
 
@@ -320,6 +334,102 @@ class PromptFromLeRobotTask(DataTransformFn):
             raise ValueError(f"{task_index=} not found in task mapping: {self.tasks}")
 
         return {**data, "prompt": prompt}
+
+
+@dataclasses.dataclass(frozen=True)
+class AugmentedPromptFromLeRobotTask(DataTransformFn):
+    """Extracts and augments prompts from LeRobot dataset tasks with categorized drink prompts."""
+
+    # Contains the LeRobot dataset tasks (dataset.meta.tasks).
+    tasks: dict[int, str]
+    # Path to the drink prompts JSON file
+    drink_prompts_path: str = "./QA/drink_prompts.json"
+    # Whether to use augmented prompts (if False, behaves like original PromptFromLeRobotTask)
+    use_augmentation: bool = True
+    # Random seed for reproducibility (optional)
+    random_seed: int | None = None
+
+    def __post_init__(self):
+        """Load drink prompts and set up drink mapping."""
+        if self.random_seed is not None:
+            random.seed(self.random_seed)
+        
+        # Load the categorized drink prompts
+        try:
+            with open(self.drink_prompts_path, 'r', encoding='utf-8') as f:
+                object.__setattr__(self, '_drink_prompts', json.load(f))
+        except FileNotFoundError:
+            print(f"Warning: Drink prompts file not found at {self.drink_prompts_path}. Falling back to original prompts.")
+            object.__setattr__(self, '_drink_prompts', {})
+        
+        # Create mapping from English drink names to Chinese names for easier lookup
+        drinks_mapping = {
+            "冰红茶": "red tea",
+            "青提绿茶": "green tea", 
+            "乳酸菌水乐": "lactic drink",
+            "劲凉冰红茶": "cool blue tea"
+        }
+        object.__setattr__(self, '_drinks_mapping', drinks_mapping)
+        
+        # Reverse mapping for quick lookup
+        english_to_chinese = {v: k for k, v in drinks_mapping.items()}
+        object.__setattr__(self, '_english_to_chinese', english_to_chinese)
+        
+        # Create keyword mapping for prompt classification
+        prompt_keywords = {
+            "冰红茶": ["red tea", "red", "kangshifu red"],
+            "青提绿茶": ["green tea", "green", "kangshifu green"],
+            "乳酸菌水乐": ["lactic drink", "lactic", "pink", "kangshifu lactic"],
+            "劲凉冰红茶": ["cool blue tea", "cool tea", "blue", "kangshifu cool"]
+        }
+        object.__setattr__(self, '_prompt_keywords', prompt_keywords)
+
+    def _classify_prompt_by_drink(self, prompt: str) -> str | None:
+        """Classify a prompt to determine which drink category it belongs to."""
+        prompt_lower = prompt.lower()
+        
+        # Check for each drink's keywords
+        for chinese_name, keywords in self._prompt_keywords.items():
+            for keyword in keywords:
+                if keyword.lower() in prompt_lower:
+                    return chinese_name
+        
+        return None
+
+    def _get_random_augmented_prompt(self, original_prompt: str, episode_index: int) -> str:
+        """Get a random augmented prompt from the same drink category, seeded by episode_index."""
+        if not self.use_augmentation or not self._drink_prompts:
+            return original_prompt
+        
+        if original_prompt is None or original_prompt not in self._drink_prompts:
+            # If we can't classify or category doesn't exist, return original
+            return original_prompt
+        
+        # Use episode_index as seed for reproducible randomness
+        rng = random.Random(episode_index.item())
+        
+        # Get random prompt from the same category
+        category_prompts = self._drink_prompts[original_prompt]
+        if category_prompts:
+            # return rng.choice(category_prompts)
+            return random.choice(category_prompts)
+        else:
+            return original_prompt
+
+    def __call__(self, data: DataDict) -> DataDict:
+        if "task_index" not in data:
+            raise ValueError('Cannot extract prompt without "task_index"')
+
+        task_index = int(data["task_index"])
+        if (original_prompt := self.tasks.get(task_index)) is None:
+            raise ValueError(f"{task_index=} not found in task mapping: {self.tasks}")
+
+        # Get augmented prompt if augmentation is enabled
+        if self.use_augmentation:
+            augmented_prompt = self._get_random_augmented_prompt(original_prompt, data["episode_index"])
+            return {**data, "prompt": augmented_prompt, "original_prompt": original_prompt}
+        else:
+            return {**data, "prompt": original_prompt}
 
 
 def flatten_dict(tree: at.PyTree) -> dict:

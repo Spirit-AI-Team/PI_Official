@@ -53,19 +53,30 @@ class TransformedDataset(Dataset[T_co]):
 
     def __getitem__(self, index: SupportsIndex) -> T_co:
         res = self._transform(self._dataset[index])
-        if 'observation.state' in res:
-            res['observation.state'][:7] *= 0
-            # res['observation.state'][9] += np.random.uniform(-0.03, 0.03)  # Add uniform noise between 0-3
-            res['observation.state'][9] += np.random.normal(0, 0.02) 
-            # res['observation.state'][13] *= 0
-        elif 'state' in res:
-            res['state'][:7] *= 0
-            # res['state'][9] += np.random.uniform(-0.03, 0.03)  # Add uniform noise between 0-3
-            res['state'][9] += np.random.normal(0, 0.02) 
-            # res['state'][13] *= 0
+        # if 'observation.state' in res:
+        #     # pass
+        #     if res['progress'] < 0.75:
+        #         if np.random.random() < 0.5:
+        #             res['observation.images.cam_right_wrist'] *= 0
+        #             res['observation.images.cam_left_wrist'] *= 0
 
-        res['actions'][..., :6] *= 0
-        res['actions'][..., 6] = 0.06
+        #     # res['observation.state'][:] *= 0
+        #     # res['observation.state'][9] += np.random.uniform(-0.03, 0.03)  # Add uniform noise between 0-3
+        #     # res['observation.state'][9] += np.random.normal(0, 0.02) 
+        #     # res['observation.state'][13] *= 0
+        # elif 'state' in res:
+        #     pass
+        #     # res['state'][:] *= 0
+        #     # if res['progress'] < 0.75:
+        #     #     if np.random.random() < 0.5:
+        #     #         res['image']['left_wrist_0_rgb'] *= 0
+        #     #         res['image']['right_wrist_0_rgb'] *= 0
+        #     # res['state'][9] += np.random.uniform(-0.03, 0.03)  # Add uniform noise between 0-3
+        #     # res['state'][9] += np.random.normal(0, 0.02) 
+        #     # res['state'][13] *= 0
+
+        # res['actions'][..., :6] *= 0
+        # res['actions'][..., 6] = 0.06
         return res
         # return self._transform(self._dataset[index])
 
@@ -123,7 +134,8 @@ def create_dataset(data_config: _config.DataConfig, model_config: _model.BaseMod
     )
 
     if data_config.prompt_from_task:
-        dataset = TransformedDataset(dataset, [_transforms.PromptFromLeRobotTask(dataset_meta.tasks)])
+        dataset = TransformedDataset(dataset, [_transforms.AugmentedPromptFromLeRobotTask(dataset_meta.tasks)])
+        # dataset = TransformedDataset(dataset, [_transforms.PromptFromLeRobotTask(dataset_meta.tasks)])
 
     return dataset
 

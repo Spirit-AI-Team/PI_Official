@@ -722,6 +722,233 @@ _CONFIGS = [
         checkpoint_base_dir="/PFS/output/lmz/outputs/checkpoints",
     ),
     TrainConfig(
+        name="spi0_hrpi_eef_waic_v1_5",
+        model=pi0.Pi0Config(action_horizon=60),
+        sample_weights_cfg="/root/lmz/pi_dev/data_sample_0412.json",
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id=[
+                    "Moz1_EEF_Y_WAIC_FETCH_ANNO_NEW_0603",
+                    #  "WAIC_FETCHYELLOWBOTTLE_SHELF_0604",
+                    #  "WAIC_FETCHPINKBOTTLE_SHELF_0604",
+                    #  "DAGGER_test_0610_OP_OLD",
+                    #  "WAIC_FETCHYELLOWBOTTLE_MVP_0604",
+                    #  "WAIC_FETCHPINKBOTTLE_MVP_0604",
+                    #  "WAIC_FETCHPINKBOTTLE_MVP_AUG_0604",
+                     ],
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_hrpi_eef_meeting_room_v1",
+                asset_id=["Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                          ],
+            ),
+            adapt_to_pi=False,
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            "prompt": "prompt",
+                            "task_index": "task_index",
+                            "actions_is_pad": "actions_is_pad",
+                            "progress": "progress",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        batch_size=64,
+        num_workers=8,
+        fsdp_devices=4,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        # weight_loader=weight_loaders.CheckpointWeightLoader("/PFS/output/limingzhu/outputs/checkpoints/spi0_hrpi_eef_meeting_room_v1/spi0_hrpi_eef_meeting_room_v1_2/20000/params"),
+        num_train_steps=30_000,
+        save_interval=10_000,
+        checkpoint_base_dir="/pfstem/limingzhu/outputs/checkpoints",
+    ),
+    TrainConfig(
+        name="spi0_hrpi_eef_waic_v1",
+        model=pi0.Pi0Config(action_horizon=60),
+        sample_weights_cfg="/root/lmz/pi_dev/data_sample_0412.json",
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id=[
+                    # "WAIC_FETCHYELLOWBOTTLE_SHELF_0606",
+                    # "WAIC_FETCHPINKBOTTLE_SHELF_0606",
+                    # "WAIC_FETCHBLUEBOTTLE_SHELF_0606",
+                    # "WAIC_FETCHGREENBOTTLE_SHELF_0606",
+
+                    # "WAIC_FETCHBLUEBOTTLE_SHELF_CNT0_0609",
+                    # "WAIC_FETCHGREENBOTTLE_SHELF_CNT0_0609",
+                    # "WAIC_FETCHPINKBOTTLE_SHELF_CNT0_0609",
+                    # "WAIC_FETCHYELLOWBOTTLE_SHELF_CNT0_0609",
+
+                    "WAIC_FETCHGREENBOTTLE_SHELF_CNT1_0609",
+                    "WAIC_FETCHBLUEBOTTLE_SHELF_CNT1_0609",
+                    "WAIC_FETCHPINKBOTTLE_SHELF_CNT1_0609",
+                    "WAIC_FETCHYELLOWBOTTLE_SHELF_CNT1_0609",
+
+                    # "WAIC_FETCHYELLOWBOTTLE_SHELF_CNT3_0609",
+                    # "WAIC_FETCHPINKBOTTLE_SHELF_CNT3_0609",
+                    # "WAIC_FETCHBLUEBOTTLE_SHELF_CNT3_0609",
+                    # "WAIC_FETCHGREENBOTTLE_SHELF_CNT3_0609",
+        
+                    # "Moz1_EEF_Y_WAIC_FETCH_PINK_ANNO_0606",
+                    # "Moz1_EEF_Y_WAIC_FETCH_YELLOW_ANNO_0606",
+                    # "Moz1_EEF_Y_WAIC_FETCH_BLUE_ANNO_0606",
+                    # "Moz1_EEF_Y_WAIC_FETCH_GREEN_ANNO_0606",
+                    # "Moz1_EEF_Y_WAIC_FETCH_YELLOW_ANNO_0609",
+                    # "Moz1_EEF_Y_WAIC_FETCH_PINK_ANNO_0609",
+                    # "Moz1_EEF_Y_WAIC_FETCH_BLUE_ANNO_0609",
+                    # "Moz1_EEF_Y_WAIC_FETCH_GREEN_ANNO_0609",
+
+                    # "WAIC_FETCHYELLOWBOTTLE_SHELF_AUG_0612",
+                    # "WAIC_FETCHYELLOWBOTTLE_SHELF_AUG_0611",
+                    # "WAIC_FETCHPINKBOTTLE_SHELF_AUG_0612",
+                    # "WAIC_FETCHPINKBOTTLE_SHELF_AUG_0611",
+                    # "WAIC_FETCHGREENBOTTLE_SHELF_AUG_0612",
+                    # "WAIC_FETCHGREENBOTTLE_SHELF_AUG_0611",
+                    # "WAIC_FETCHBLUEBOTTLE_SHELF_AUG_0612",
+                    # "WAIC_FETCHBLUEBOTTLE_SHELF_AUG_0611",
+
+
+                    #  "WAIC_FETCHYELLOWBOTTLE_MVP_0603",
+                    #  "WAIC_FETCHPINKBOTTLE_MVP_0603",
+                    #  "WAIC_FETCHYELLOWBOTTLE_MVP_AUG_0604",
+                    #  "WAIC_FETCHYELLOWBOTTLE_MVP_0604",
+                    #  "WAIC_FETCHPINKBOTTLE_MVP_0604",
+                    #  "WAIC_FETCHPINKBOTTLE_MVP_AUG_0604",
+                     ],
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_hrpi_eef_meeting_room_v1",
+                asset_id=[
+                          "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                          "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                          "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                          "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                        #   "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                          ],
+            ),
+            adapt_to_pi=False,
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            "prompt": "prompt",
+                            "task_index": "task_index",
+                            "actions_is_pad": "actions_is_pad",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        batch_size=64,
+        num_workers=8,
+        fsdp_devices=4,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        # weight_loader=weight_loaders.CheckpointWeightLoader("/PFS/output/limingzhu/outputs/checkpoints/spi0_hrpi_eef_meeting_room_v1/spi0_hrpi_eef_meeting_room_v1_2/20000/params"),
+        num_train_steps=30_000,
+        save_interval=10_000,
+        checkpoint_base_dir="/pfstem/limingzhu/outputs/checkpoints",
+    ),
+    TrainConfig(
+        name="spi0_hrpi_eef_meeting_room_v1",
+        model=pi0.Pi0Config(action_horizon=60),
+        sample_weights_cfg="/root/lmz/pi_dev/data_sample_0412.json",
+        exp_name = 'test',
+        data=LeRobotAlohaDataConfig(
+            repo_id=[
+                     "WAIC_FETCHYELLOWBOTTLE_MVP_0603",
+                     "WAIC_FETCHPINKBOTTLE_MVP_0603",
+                     ],
+            assets=AssetsConfig(
+                assets_dir="assets/spi0_hrpi_eef_meeting_room_v1",
+                asset_id=["Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                          "Moz1_EEF_Y_MeetingRoom_PutPenInBox_ANNO_0513",
+                          ],
+            ),
+            adapt_to_pi=False,
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "actions",
+                            "prompt": "prompt",
+                            "actions_is_pad": "actions_is_pad",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        batch_size=128,
+        num_workers=8,
+        fsdp_devices=8,
+        lr_schedule = _optimizer.CosineDecaySchedule(decay_steps=30_000),
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        # weight_loader=weight_loaders.CheckpointWeightLoader("/PFS/output/limingzhu/outputs/checkpoints/spi0_hrpi_eef_meeting_room_v1/spi0_hrpi_eef_meeting_room_v1_2/20000/params"),
+        num_train_steps=30_000,
+        save_interval=10_000,
+        checkpoint_base_dir="/pfstem/limingzhu/outputs/checkpoints",
+    ),
+    TrainConfig(
         name="multi_task_op_stack_cup",
         model=pi0.Pi0Config(action_horizon=60),
         sample_weights_cfg="/root/lmz/pi_dev/data_sample_0412.json",
